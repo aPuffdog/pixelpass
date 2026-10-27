@@ -1,0 +1,46 @@
+{
+  "name": "codex-deepseek-media-proxy",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Codex Responses proxy that replaces inline images with DeepSeek file IDs.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aPuffdog/deepseek-media-proxy.git"
+  },
+  "homepage": "https://github.com/aPuffdog/deepseek-media-proxy#readme",
+  "bugs": {
+    "url": "https://github.com/aPuffdog/deepseek-media-proxy/issues"
+  },
+  "bin": {
+    "deepseek-proxy": "./deepseek-proxy"
+  },
+  "files": [
+    "deepseek-proxy",
+    "install.sh",
+    "uninstall.sh",
+    "install.cmd",
+    "uninstall.cmd",
+    "src/",
+    "scripts/",
+    "README.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node --test",
+    "check": "node --check src/cli.js && node --check src/cache.js && node --check src/codex-config.js && node --check src/compression.js && node --check src/config.js && node --check src/control.js && node --check src/data-url.js && node --check src/deepseek-files.js && node --check src/proxy-server.js && node --check src/rewrite.js && node --check src/serialized-images.js && sh -n deepseek-proxy",
+    "package:release": "sh scripts/package-release.sh",
+    "health": "node scripts/health.js",
+    "live-smoke": "node scripts/live-smoke.js",
+    "install-autostart": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/install-autostart.ps1",
+    "service-status": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/status.ps1",
+    "uninstall-autostart": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-autostart.ps1"
+  }
+}

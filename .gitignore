@@ -1,0 +1,8 @@
+node_modules/
+data/
+.env
+*.log
+dist/
+.DS_Store
+*.backup-*
+HANDOFF-*.md

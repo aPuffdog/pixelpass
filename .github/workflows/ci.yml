@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check runtime capabilities
+        run: node -e "const z=require('node:zlib'); for (const [k,v] of Object.entries({zstdCompress:z.zstdCompress,zstdDecompress:z.zstdDecompress,File,FormData,fetch})) if (typeof v!=='function') throw new Error(k)"
+      - name: Run tests
+        run: node --test tests/*.test.js
+      - name: Check syntax and executable scripts
+        run: npm run check
+      - name: Build release archive
+        run: sh scripts/package-release.sh
+      - name: Inspect release archive
+        run: |
+          tar -tzf dist/deepseek-media-proxy-v*.tar.gz
+          (cd dist && shasum -a 256 -c ./*.sha256)
