@@ -100,16 +100,22 @@ Actual savings depend on image count, repetition, conversation length, and cache
 
 Requirements:
 
-- macOS
+- macOS or Windows 10/11
 - Codex already configured with a DeepSeek Responses provider
-- Node.js 22.15 or newer; Codex's bundled Node.js also works
+- Node.js 22.15 or newer. On Windows, the installer must resolve `node.exe`; it stores that absolute path in the scheduled task so a later PATH change does not break startup.
 
-Clone and install:
+Download the release package for your platform from [GitHub Releases](https://github.com/aPuffdog/pixelpass/releases/latest):
+
+- macOS: [`pixelpass-v0.3.1-macos.tar.gz`](https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-macos.tar.gz)
+- Windows: [`pixelpass-v0.3.1-windows.zip`](https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-windows.zip)
+
+### macOS
 
 ```bash
-git clone https://github.com/aPuffdog/pixelpass.git
+tar -xzf pixelpass-v0.3.1-macos.tar.gz
 cd pixelpass
-./install.sh
+sh ./install.sh
+./pixelpass status
 ```
 
 The installer will:
@@ -122,22 +128,40 @@ The installer will:
 
 After installation, fully quit and reopen Codex, then create or fork a task.
 
-Check the current state:
+### Windows
+
+Extract the ZIP, open PowerShell in the resulting `pixelpass` folder, and run:
+
+```powershell
+.\pixelpass.cmd on -ProviderId custom
+.\pixelpass.cmd status
+```
+
+Replace `custom` with the actual DeepSeek provider name in `%USERPROFILE%\.codex\config.toml`. The installer starts a proxy bound to `127.0.0.1:17892`, registers a per-user scheduled task, backs up configuration, and changes only that provider's `base_url`. Fully quit and reopen Codex afterwards.
+
+Everyday Windows controls mirror the macOS commands:
+
+```powershell
+.\pixelpass.cmd on -ProviderId custom  # start and route Codex through the proxy
+.\pixelpass.cmd status                 # inspect health, routing, and statistics
+.\pixelpass.cmd off                    # restore direct routing and stop
+```
+
+`stop`, `start`, and `restart` control only the proxy service; use `off` to shut down the full routing setup.
+
+### Check or restore
+
+macOS:
 
 ```bash
 ./pixelpass status
-```
-
-Enable or disable Codex routing through the proxy:
-
-```bash
 ./pixelpass on
 ./pixelpass off
 ```
 
 `off` restores direct Codex traffic and stops the proxy. The proxy uses the authentication information Codex already sends; you do not need to copy or enter another API key. The legacy `./deepseek-proxy` command remains available for existing installations.
 
-## Daily control
+## macOS daily control
 
 | Command | What it does |
 |---|---|
@@ -216,7 +240,7 @@ Check `lastError` in `status`, and confirm that the selected DeepSeek model and 
 
 ## Known limitations
 
-- The unified control entry point currently supports macOS LaunchAgents; Windows keeps the legacy Task Scheduler scripts.
+- macOS uses LaunchAgent and Windows uses Task Scheduler; both expose `on`, `status`, and `off` through their native command entry point.
 - Only the HTTP Responses API is handled; WebSocket is not supported.
 - PNG, JPEG, WebP, and GIF are supported.
 - A `file_id` belongs to the DeepSeek account that created it and cannot be sent to another provider.
@@ -224,13 +248,15 @@ Check `lastError` in `status`, and confirm that the selected DeepSeek model and 
 
 ## Development
 
+The static project homepage lives at [`docs/index.html`](docs/index.html), with language switching, macOS / Windows downloads, install steps, and lifecycle diagrams. Serve `docs/` with any static server to preview or deploy it; the old `docs/preview.html` redirects to the homepage. Page sources are maintained independently of the illustration generator, so regenerating assets does not overwrite the site.
+
 ```bash
 node --test tests/*.test.js
 npm run check
 npm run package:release
 ```
 
-The release command produces `dist/pixelpass-v<version>.tar.gz` and the matching `.sha256` file. GitHub Actions repeats tests, syntax checks, and release-package verification on macOS.
+The release command produces a macOS TAR.GZ and a Windows ZIP, each with a matching `.sha256` file. GitHub Actions runs the proxy tests on both macOS and Windows, parses every PowerShell script and exercises `on → status → stop → start → off` on Windows, and verifies both release archives on macOS.
 
 ## License
 

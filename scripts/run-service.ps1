@@ -3,7 +3,10 @@ param(
     [string]$ListenHost = "127.0.0.1",
 
     [Parameter(Mandatory = $false)]
-    [int]$Port = 17892
+    [int]$Port = 17892,
+
+    [Parameter(Mandatory = $false)]
+    [string]$NodePath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,7 +44,12 @@ while ($true) {
         }
     }
 
-    $node = Get-Command node.exe -ErrorAction Stop
+    if (-not $NodePath) {
+        $NodePath = (Get-Command node.exe -ErrorAction Stop).Source
+    }
+    if (-not (Test-Path -LiteralPath $NodePath)) {
+        throw "Node.js executable is missing: $NodePath"
+    }
     $cli = Join-Path $ProjectRoot "src\cli.js"
     if (-not (Test-Path -LiteralPath $cli)) {
         throw "Proxy entry point is missing: $cli"
@@ -55,7 +63,7 @@ while ($true) {
     $env:MEDIA_PROXY_DATA_DIR = Join-Path $StateDir "data"
     try {
         $process = Start-Process `
-            -FilePath $node.Source `
+            -FilePath $NodePath `
             -ArgumentList @("`"$cli`"") `
             -WorkingDirectory $ProjectRoot `
             -WindowStyle Hidden `

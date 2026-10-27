@@ -6,25 +6,113 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - name: Run tests
-        run: node --test tests/*.test.js
-      - name: Build release archive
+      - name: Run tests and checks
+        run: |
+          node --test tests/*.test.js
+          npm run check
+      - name: Build platform release archives
         run: sh scripts/package-release.sh
-      - name: Publish GitHub release
+      - name: Verify release archives
+        run: |
+          tar -tzf dist/pixelpass-v*-macos.tar.gz
+          unzip -l dist/pixelpass-v*-windows.zip
+          (cd dist && shasum -a 256 -c ./*.sha256)
+      - name: Save release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            dist/pixelpass-v*-macos.tar.gz
+            dist/pixelpass-v*-macos.tar.gz.sha256
+            dist/pixelpass-v*-windows.zip
+            dist/pixelpass-v*-windows.zip.sha256
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run tests
+        run: node --test
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts/*.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object {
+                Write-Error "$($_.Extent.File):$($_.Extent.StartLineNumber): $($_.Message)"
+              }
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Test Windows install and control lifecycle
+        shell: pwsh
+        run: ./scripts/windows-install-smoke.ps1
+
+  publish:
+    needs:
+      - macos
+      - windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download verified release assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: dist
+      - name: Prepare release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed "s/{{VERSION}}/$VERSION/g" \
+            .github/release-notes-template.md > release-notes.md
+      - name: Publish or update GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "PixelPass $GITHUB_REF_NAME" \
-            --generate-notes
+          VERSION="${GITHUB_REF_NAME#v}"
+          ASSETS=(
+            "dist/pixelpass-v$VERSION-macos.tar.gz"
+            "dist/pixelpass-v$VERSION-macos.tar.gz.sha256"
+            "dist/pixelpass-v$VERSION-windows.zip"
+            "dist/pixelpass-v$VERSION-windows.zip.sha256"
+          )
+          TITLE="DeepSeek Image Cache Proxy $GITHUB_REF_NAME"
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${ASSETS[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+            gh release edit "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes-file release-notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" "${ASSETS[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes-file release-notes.md
+          fi

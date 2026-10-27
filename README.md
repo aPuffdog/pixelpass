@@ -98,32 +98,58 @@ Codex 的新请求可能包含历史 `A` 和新图片 `B`，两者仍然都是 B
 
 ## 安装与开始使用
 
-需要 macOS、Node.js 22.15 或更新版本（也可使用 Codex 自带的 Node.js），并已在 Codex 中配置 DeepSeek Responses provider。
+需要 macOS 或 Windows 10/11、Node.js 22.15 或更新版本，并已在 Codex 中配置 DeepSeek Responses provider。Windows 安装时需要能解析 `node.exe`；安装器会把它当时的绝对路径写入计划任务，避免登录启动时 PATH 变化导致代理消失。
+
+从 [GitHub Releases](https://github.com/aPuffdog/pixelpass/releases/latest) 下载对应系统的正式发布包：
+
+- macOS：[`pixelpass-v0.3.1-macos.tar.gz`](https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-macos.tar.gz)
+- Windows：[`pixelpass-v0.3.1-windows.zip`](https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-windows.zip)
+
+### macOS
 
 ```bash
-git clone https://github.com/aPuffdog/pixelpass.git
+tar -xzf pixelpass-v0.3.1-macos.tar.gz
 cd pixelpass
-./install.sh
+sh ./install.sh
+./pixelpass status
 ```
 
 安装会启动只监听 `127.0.0.1:17892` 的本机代理、注册 macOS LaunchAgent，并备份后更新当前 Codex provider 的 `base_url`。安装完成后，完全退出并重新打开 Codex，再开始一个新任务或 fork 现有任务。
 
-确认运行状态：
+### Windows
+
+解压 ZIP 后，在得到的 `pixelpass` 文件夹中打开 PowerShell：
+
+```powershell
+.\pixelpass.cmd on -ProviderId custom
+.\pixelpass.cmd status
+```
+
+把 `custom` 替换为 `%USERPROFILE%\.codex\config.toml` 中实际的 DeepSeek provider 名称。安装脚本会启动只监听 `127.0.0.1:17892` 的代理、注册当前用户计划任务、备份配置并只修改该 provider 的 `base_url`。之后完全退出并重新打开 Codex，再新建或 fork 任务。
+
+Windows 入口与 macOS 保持一致：
+
+```powershell
+.\pixelpass.cmd on -ProviderId custom  # 启动代理并接入 Codex
+.\pixelpass.cmd status                 # 查看代理、路由和统计
+.\pixelpass.cmd off                    # 恢复直连并关闭代理
+```
+
+`stop` / `start` / `restart` 只控制代理服务，不修改 Codex 路由；完整关闭整套流程请使用 `off`。
+
+### 检查与恢复
+
+macOS：
 
 ```bash
 ./pixelpass status
-```
-
-打开或关闭 Codex 代理路由：
-
-```bash
 ./pixelpass on
 ./pixelpass off
 ```
 
 `off` 会恢复 Codex 直连 DeepSeek 并关闭代理。代理使用 Codex 原有的认证信息，不需要另行复制 API Key。已有用户也可以继续使用兼容命令 `./deepseek-proxy`。
 
-## 日常控制
+## macOS 日常控制
 
 | 命令 | 作用 |
 |---|---|
@@ -197,7 +223,7 @@ Codex
 
 ## 已知限制
 
-- 统一控制入口目前只实现了 macOS LaunchAgent；Windows 保留旧版计划任务脚本。
+- macOS 使用 LaunchAgent，Windows 使用计划任务；两端入口都提供 `on`、`status`、`off` 日常操作。
 - 仅处理 HTTP Responses API，不支持 WebSocket。
 - 支持 PNG、JPEG、WebP、GIF。
 - `file_id` 属于 DeepSeek 账户，不能发给其他 provider。
@@ -205,13 +231,15 @@ Codex
 
 ## 开发
 
+静态项目主页位于 [`docs/index.html`](docs/index.html)，包含中英文切换、macOS / Windows 下载、安装步骤与生命周期图。用任意静态服务器托管 `docs/` 即可预览或部署；旧 `docs/preview.html` 会跳转到主页。主页源文件独立于插图生成器，重新生成图片不会覆盖页面。
+
 ```bash
 node --test tests/*.test.js
 npm run check
 npm run package:release
 ```
 
-打包会生成 `dist/pixelpass-v<version>.tar.gz` 及对应的 `.sha256` 校验文件。GitHub Actions 会在 macOS 上运行测试、语法检查和发布包校验。
+打包会分别生成 macOS TAR.GZ 和 Windows ZIP，并各带一个 `.sha256` 校验文件。GitHub Actions 会在 macOS 和 Windows 上运行代理测试，在 Windows 上解析全部 PowerShell 脚本并执行 `on → status → stop → start → off` 安装生命周期验收，在 macOS 上校验两个发布归档。
 
 ## License
 

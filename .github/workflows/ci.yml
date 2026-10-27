@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,5 +26,47 @@ jobs:
         run: sh scripts/package-release.sh
       - name: Inspect release archive
         run: |
-          tar -tzf dist/pixelpass-v*.tar.gz
+          tar -tzf dist/pixelpass-v*-macos.tar.gz
+          unzip -l dist/pixelpass-v*-windows.zip
           (cd dist && shasum -a 256 -c ./*.sha256)
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run proxy tests
+        run: node --test
+      - name: Check JavaScript syntax
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem src/*.js | ForEach-Object {
+            node --check $_.FullName
+            if ($LASTEXITCODE -ne 0) { $failed = $true }
+          }
+          if ($failed) { exit 1 }
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts/*.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object {
+                Write-Error "$($_.Extent.File):$($_.Extent.StartLineNumber): $($_.Message)"
+              }
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Test Windows install and control lifecycle
+        shell: pwsh
+        run: ./scripts/windows-install-smoke.ps1

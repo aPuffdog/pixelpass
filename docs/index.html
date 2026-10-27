@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="为 Codex 接上 DeepSeek 图片上传与文件引用复用流程，减少历史图片造成的 Responses 请求体膨胀。支持 macOS 与 Windows 脚本安装。">
+  <meta name="theme-color" content="#f8f9f6">
+  <title>DeepSeek Image Cache Proxy — 图片还在，请求更轻</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="site.css">
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">跳到主要内容</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="#" aria-label="DeepSeek Image Cache Proxy">
+        <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><rect x="5" y="5" width="19" height="23" rx="4"/><rect x="12" y="12" width="19" height="19" rx="4"/><path d="m17 21 4 4 6-7"/></svg>
+        <span>DeepSeek<span class="brand-sub">Image Cache Proxy</span></span>
+      </a>
+      <nav class="desktop-nav" aria-label="主导航" data-i18n-aria="navLabel">
+        <a href="#how-it-works" data-i18n="navHow">工作原理</a>
+        <a href="#download" data-i18n="navDownload">下载安装</a>
+        <a href="#faq" data-i18n="navFaq">常见问题</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" aria-label="语言 / Language">
+          <button type="button" data-lang="zh-CN" aria-pressed="true" lang="zh-CN">中文</button>
+          <button type="button" data-lang="en" aria-pressed="false" lang="en">EN</button>
+        </div>
+        <a class="github-link" href="https://github.com/aPuffdog/pixelpass" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.82.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03A9.6 9.6 0 0 1 12 6.79c.85 0 1.71.11 2.51.34 1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.69-4.58 4.94.36.31.68.92.68 1.85v2.78c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span><span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span><span data-i18n="eyebrow">为 Codex × DeepSeek 而做</span></p>
+        <h1 id="hero-title"><span data-i18n="heroLine1">图片还在。</span><span class="soft-title" data-i18n="heroLine2">请求更轻。</span></h1>
+        <p class="hero-description" data-i18n="heroDescription">把已上传的历史图片换成 DeepSeek 文件引用。让长图片会话继续向前，少被 413 打断。</p>
+        <div class="hero-buttons">
+          <a class="button button-primary" data-download="macos" href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-macos.tar.gz"><span data-i18n="downloadMac">下载 macOS 版</span><span aria-hidden="true">↓</span></a>
+          <a class="button button-secondary" data-download="windows" href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-windows.zip"><span data-i18n="downloadWindows">下载 Windows 版</span><span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-meta"><span>v0.3.1</span><span aria-hidden="true">·</span><span data-i18n="scriptPackages">脚本安装包</span><span aria-hidden="true">·</span><a href="#download" data-i18n="viewInstall">查看安装步骤 ↘</a></p>
+        <div class="hero-points"><span data-i18n="pointLocal">本机运行</span><span data-i18n="pointQuality">原始图片画质</span><span data-i18n="pointControl">随时恢复直连</span></div>
+      </div>
+
+      <div class="request-illustration" role="img" aria-label="历史 A 和新 B 仍从 Codex 发到代理；A 复用旧 ID，B 上传获得新 ID，DeepSeek 读取两个文件" data-i18n-aria="heroArtAlt">
+        <div class="illustration-topline"><span data-i18n="artCurrent">下一轮请求</span><span class="mono">A + B</span></div>
+        <div class="request-source">
+          <div class="photo-tile"><svg viewBox="0 0 88 65" aria-hidden="true"><rect width="88" height="65" rx="5" fill="#e9ebe5"/><circle cx="65" cy="17" r="6" fill="#8b9182"/><path d="m4 57 25-34 20 25 13-16 22 25" fill="#767d6c"/><path d="m4 57 25-18 20 18" fill="#bac0b2"/></svg><span><b>A</b><span data-i18n="artHistory">历史图片</span></span></div>
+          <span class="plus" aria-hidden="true">+</span>
+          <div class="photo-tile"><svg viewBox="0 0 88 65" aria-hidden="true"><rect width="88" height="65" rx="5" fill="#e9ebe5"/><path d="M13 57V30h18v27M38 57V10h24v47M68 57V37h11v20" fill="#858c7a"/><path d="M44 18h12M44 28h12M44 38h12" stroke="#e9ebe5" stroke-width="4"/></svg><span><b>B</b><span data-i18n="artNew">新图片</span></span></div>
+          <span class="base64-label mono">Base64</span>
+        </div>
+        <div class="wire"><span>↓</span><small data-i18n="artLocalHop">Codex → 本机代理，仍携带图片字节</small></div>
+        <div class="proxy-box">
+          <div class="proxy-heading"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="4"/><path d="m6 10 3 3 5-6"/></svg><b data-i18n="artProxy">本机图片缓存代理</b><span class="mono">SHA-256</span></div>
+          <div class="mapping-row"><span class="image-key">A</span><span data-i18n="artHit">命中已有上传</span><span class="map-arrow" aria-hidden="true">→</span><code>file_A</code><span class="mapping-state" data-i18n="artReuse">复用</span></div>
+          <div class="mapping-row"><span class="image-key">B</span><span data-i18n="artUpload">上传至 /files</span><span class="map-arrow" aria-hidden="true">→</span><code>file_B</code><span class="mapping-state" data-i18n="artReturns">DS 返回</span></div>
+        </div>
+        <div class="wire"><span>↓</span><small data-i18n="artUpstreamHop">代理 → DeepSeek，图片改用文件引用</small></div>
+        <div class="response-box"><span class="endpoint mono">POST /responses</span><div><code>file_A</code><span aria-hidden="true">+</span><code>file_B</code></div><p data-i18n="artResolves">DeepSeek 读取已存图片，模型仍能理解 A 和 B。</p></div>
+        <div class="illustration-footer"><span class="tiny-dot" aria-hidden="true"></span><span data-i18n="artFootnote">文件 ID 由 DeepSeek 生成，哈希只负责查找。</span></div>
+      </div>
+    </section>
+
+    <section class="proof-strip" aria-label="一次真实会话的观测结果" data-i18n-aria="proofLabel">
+      <div class="shell proof-grid">
+        <div class="proof-intro"><span class="eyebrow" data-i18n="proofEyebrow">来自一次真实图片会话</span><p data-i18n="proofScope">比较改写前后的上游 Responses 请求体；不含单独的图片文件上传。</p></div>
+        <div class="metric"><span class="metric-value">99.2<span>%</span></span><span data-i18n="metricReduction">单次请求体减少</span><small class="mono">256 MiB → 2.1 MiB</small></div>
+        <div class="metric"><span class="metric-value">183<span data-i18n="metricImagesUnit"> 张</span></span><span data-i18n="metricImages">该次请求中的图片</span><small data-i18n="metricQuality">保留全部图片输入</small></div>
+        <div class="metric"><span class="metric-value">52,382</span><span data-i18n="metricHits">累计图片缓存复用次数</span><small data-i18n="metricSample">455 次请求的观测样本</small></div>
+      </div>
+    </section>
+
+    <section class="section shell" id="how-it-works" aria-labelledby="how-title">
+      <div class="section-heading"><div><p class="eyebrow" data-i18n="howEyebrow">01 / 原理</p><h2 id="how-title" data-i18n="howTitle">DeepSeek 已有能力，代理接上流程。</h2></div><p class="section-intro" data-i18n="howIntro">当前接入路径会再次发送历史 Base64 图片。代理补齐上传、记住 ID、下次复用这三个环节。</p></div>
+      <div class="steps-grid">
+        <article class="step"><span class="step-number">01</span><div class="step-symbol mono" aria-hidden="true">A <span>→</span> /files</div><h3 data-i18n="step1Title">首次出现，上传原图</h3><p data-i18n="step1Body">代理解码并计算图片哈希。没有有效映射时，调用 DeepSeek Files API 上传原始字节。</p></article>
+        <article class="step"><span class="step-number">02</span><div class="step-symbol mono" aria-hidden="true">DS <span>→</span> file_A</div><h3 data-i18n="step2Title">DeepSeek 返回文件 ID</h3><p data-i18n="step2Body">DeepSeek 保存图片并返回 id。代理在本机持久化“凭证指纹 + 图片哈希 → file_id”。</p></article>
+        <article class="step"><span class="step-number">03</span><div class="step-symbol mono" aria-hidden="true">A <span>↳</span> file_A</div><h3 data-i18n="step3Title">历史再出现，直接复用</h3><p data-i18n="step3Body">下一轮的 A 命中旧记录，只上传新 B。Responses 改用两个文件 ID，DeepSeek 依然读取完整图片。</p></article>
+      </div>
+      <details class="lifecycle-details">
+        <summary><span><span class="summary-kicker" data-i18n="diagramKicker">完整生命周期图</span><span data-i18n="diagramTitle">跟着同一张 A，看两轮请求如何变化</span></span><span class="expand-icon" aria-hidden="true">+</span></summary>
+        <div class="lifecycle-content">
+          <picture data-lifecycle-picture>
+            <source media="(max-width: 600px)" srcset="assets/deepseek-image-cache-proxy.zh-CN-lifecycle-mobile.png">
+            <img src="assets/deepseek-image-cache-proxy.zh-CN-lifecycle.png" width="1200" height="1800" loading="lazy" alt="图片 A 首次上传，DeepSeek 返回 file_A，下一轮历史 A 复用旧 ID，新 B 单独上传获得 file_B；缓存到期后再上传">
+          </picture>
+          <div class="diagram-caption"><p data-i18n="diagramCaption">“重复”指当前请求再次携带与历史上传字节完全相同的图片。重启保留映射；默认请求 30 天有效期，过期后在图片下次出现时重新上传。</p><a data-full-diagram href="assets/deepseek-image-cache-proxy.zh-CN-lifecycle.png" target="_blank" rel="noopener noreferrer" data-i18n="diagramOpen">打开完整大图 ↗</a></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="download-section" id="download" aria-labelledby="download-title">
+      <div class="shell">
+        <div class="section-heading"><div><p class="eyebrow" data-i18n="downloadEyebrow">02 / 下载</p><h2 id="download-title" data-i18n="downloadTitle">选好平台，就能开始。</h2></div><p class="section-intro" data-i18n="downloadIntro">开源、无额外 npm 依赖。先准备 Node.js 22.15+ 和已配置 DeepSeek 的 Codex。</p></div>
+        <div class="download-grid">
+          <article class="download-card" id="macos-download">
+            <div class="os-heading"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="5" width="24" height="17" rx="2"/><path d="M2 27h28M11 22l-1 5m11-5 1 5"/></svg><span class="package-label">v0.3.1 · TAR.GZ</span></div>
+            <h3>macOS</h3><p class="os-type" data-i18n="macType">LaunchAgent · 统一控制命令</p>
+            <p class="os-description" data-i18n="macDescription">安装时启动本机代理、备份 Codex 配置并接入代理路由。登录后自动启动。</p>
+            <a class="button button-primary button-full" data-download="macos" href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-macos.tar.gz"><span data-i18n="downloadMac">下载 macOS 版</span><span aria-hidden="true">↓</span></a>
+            <div class="download-subline"><span data-i18n="macArchive">正式发布包 · 含 install.sh</span><a href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-macos.tar.gz.sha256" data-i18n="checksum">SHA-256 校验</a></div>
+            <a class="text-link" href="#quick-start" data-select-platform="macos" data-i18n="macSteps">查看 macOS 安装步骤 →</a>
+          </article>
+          <article class="download-card" id="windows-download">
+            <div class="os-heading"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m3 6 11-2v11H3Zm15-3 11-2v14H18ZM3 18h11v11L3 27Zm15 0h11v13l-11-2Z"/></svg><span class="package-label">v0.3.1 · ZIP</span></div>
+            <h3>Windows</h3><p class="os-type" data-i18n="winType">PowerShell · 计划任务脚本</p>
+            <p class="os-description" data-i18n="winDescription">下载正式 Windows ZIP，使用 pixelpass.cmd 完成安装、状态检查和恢复直连。计划任务在登录后启动。</p>
+            <a class="button button-secondary button-full" data-download="windows" href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-windows.zip"><span data-i18n="downloadWindows">下载 Windows 版</span><span aria-hidden="true">↓</span></a>
+            <div class="download-subline"><span data-i18n="winArchive">正式发布包 · 含 pixelpass.cmd</span><a href="https://github.com/aPuffdog/pixelpass/releases/download/v0.3.1/pixelpass-v0.3.1-windows.zip.sha256" data-i18n="checksum">SHA-256 校验</a></div>
+            <a class="text-link" href="#quick-start" data-select-platform="windows" data-i18n="winSteps">查看 Windows 安装步骤 →</a>
+          </article>
+        </div>
+        <p class="download-note"><span aria-hidden="true">↳</span><span data-i18n="downloadNote">两种下载都包含可阅读的安装脚本，需 Node.js 运行环境。安装后请保留解压目录。</span><a href="https://github.com/aPuffdog/pixelpass/releases" target="_blank" rel="noopener noreferrer" data-i18n="allReleases">所有版本 ↗</a></p>
+
+        <div class="quick-start" id="quick-start">
+          <div class="quick-start-heading"><h3 data-i18n="quickTitle">从下载到接入，只需三步。</h3><div class="platform-tabs" role="tablist" aria-label="安装平台" data-i18n-aria="platformLabel"><button type="button" id="tab-macos" role="tab" aria-controls="panel-macos" aria-selected="true" tabindex="0" data-platform="macos">macOS</button><button type="button" id="tab-windows" role="tab" aria-controls="panel-windows" aria-selected="false" tabindex="-1" data-platform="windows">Windows</button></div></div>
+          <div id="panel-macos" role="tabpanel" aria-labelledby="tab-macos" class="install-panel">
+            <ol class="install-steps">
+              <li><span class="install-index">1</span><div><h4 data-i18n="macStep1">解压并打开终端</h4><p data-i18n="macStep1Body">解压下载的 TAR.GZ，将得到的 pixelpass 文件夹放到固定位置。在这个文件夹内打开终端。</p></div></li>
+              <li><span class="install-index">2</span><div><h4 data-i18n="macStep2">运行安装脚本</h4><div class="code-block"><pre><code id="mac-install-code">sh ./install.sh</code></pre><button type="button" class="copy-button" data-copy="mac-install-code" data-i18n="copy">复制</button></div><p data-i18n="macStep2Body">脚本会备份配置、启动代理，并把当前 DeepSeek provider 的 base_url 指向本机。</p></div></li>
+              <li><span class="install-index">3</span><div><h4 data-i18n="restartTitle">重开 Codex，再检查状态</h4><p data-i18n="macStep3Body">完全退出并重新打开 Codex，然后新建或 fork 一个任务。检查代理和路由：</p><div class="code-block"><pre><code id="mac-status-code">./pixelpass status</code></pre><button type="button" class="copy-button" data-copy="mac-status-code" data-i18n="copy">复制</button></div></div></li>
+            </ol>
+            <div class="control-note"><b data-i18n="restoreTitle">需要恢复直连？</b><code>./pixelpass off</code><span data-i18n="macRestore">恢复 Codex 直连并关闭代理。再次启用用 ./pixelpass on，之后重开 Codex。</span></div>
+          </div>
+          <div id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" class="install-panel" hidden>
+            <ol class="install-steps">
+              <li><span class="install-index">1</span><div><h4 data-i18n="winStep1">解压并打开 PowerShell</h4><p data-i18n="winStep1Body">将 ZIP 解压到固定目录，在解压后的项目文件夹打开 PowerShell。确认 node.exe 已在 PATH 中。</p></div></li>
+              <li><span class="install-index">2</span><div><h4 data-i18n="winStep2">指定已有 provider，运行安装</h4><div class="code-block"><pre><code id="win-install-code">.\pixelpass.cmd on -ProviderId custom</code></pre><button type="button" class="copy-button" data-copy="win-install-code" data-i18n="copy">复制</button></div><p data-i18n="winStep2Body">把 custom 换成 Codex config.toml 中 DeepSeek provider 的实际名称。脚本会注册计划任务、备份并修改该 provider 的地址。</p></div></li>
+              <li><span class="install-index">3</span><div><h4 data-i18n="restartTitle">重开 Codex，再检查状态</h4><p data-i18n="winStep3Body">完全退出并重新打开 Codex，再新建或 fork 任务。在项目目录检查代理和路由：</p><div class="code-block"><pre><code id="win-status-code">.\pixelpass.cmd status</code></pre><button type="button" class="copy-button" data-copy="win-status-code" data-i18n="copy">复制</button></div></div></li>
+            </ol>
+            <div class="control-note"><b data-i18n="restoreTitle">需要恢复直连？</b><code>.\pixelpass.cmd off</code><span data-i18n="winRestore">关闭代理并按安装记录恢复 Codex 配置，之后重开 Codex。stop 只停止服务，不恢复路由。</span></div>
+          </div>
+          <div class="prerequisites"><span data-i18n="prerequisiteLabel">准备好环境：</span><a href="https://nodejs.org/en/download" target="_blank" rel="noopener noreferrer">Node.js 22.15+ ↗</a><a data-readme href="https://github.com/aPuffdog/pixelpass#readme" target="_blank" rel="noopener noreferrer" data-i18n="providerGuide">DeepSeek provider 配置与完整文档 ↗</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell faq-section" id="faq" aria-labelledby="faq-title">
+      <div class="faq-heading"><p class="eyebrow" data-i18n="faqEyebrow">03 / 你可能还想知道</p><h2 id="faq-title" data-i18n="faqTitle">开始之前，心里有底。</h2><a href="https://github.com/aPuffdog/pixelpass/issues" target="_blank" rel="noopener noreferrer" class="text-link" data-i18n="issueLink">反馈问题 ↗</a></div>
+      <div class="faq-list">
+        <details><summary><span data-i18n="faq1Q">它压缩图片，还是删除历史？</span><span aria-hidden="true">+</span></summary><p data-i18n="faq1A">它将本机发往 DeepSeek Responses 的 Base64 图片改成文件引用。图片字节、画质和消息位置保留；模型仍能读取图片，视觉 token 不会因此减少。Codex 到本机这一段仍可能携带完整 Base64。</p></details>
+        <details><summary><span data-i18n="faq2Q">什么算重复图片？file_id 从哪里来？</span><span aria-hidden="true">+</span></summary><p data-i18n="faq2A">重复指当前请求中的图片与历史上传图片的字节完全相同。SHA-256 仅用于本地查找；file_id 来自 DeepSeek /files 上传响应中的 id。重新压缩后，即使肉眼相似，也可能无法命中。</p></details>
+        <details><summary><span data-i18n="faq3Q">重启、到期或者上传失败会怎样？</span><span aria-hidden="true">+</span></summary><p data-i18n="faq3A">重启会保留本地映射。默认请求文件 30 天后过期，以 DeepSeek 返回的到期时间为准；到期后在图片再次出现时重新上传。可重试上传默认最多重试 3 次，最终失败终止该请求。远端文件被提前删除时，当前版本不会自动修复旧 ID，需要处理本地缓存。</p></details>
+        <details><summary><span data-i18n="faq4Q">macOS 和 Windows 的支持一样吗？</span><span aria-hidden="true">+</span></summary><p data-i18n="faq4A">两者使用同一 Node.js 代理核心。macOS 提供 LaunchAgent 和 pixelpass on/off/status，托管入口默认 1 GiB；Windows 使用 PowerShell、计划任务和 pixelpass.cmd 提供相同日常入口，入口默认 256 MiB。Windows 发布任务会在 windows-latest 上实际执行安装、健康检查、停止、启动和恢复直连。</p></details>
+        <details><summary><span data-i18n="faq5Q">需要把 API Key 再交给这个网页吗？</span><span aria-hidden="true">+</span></summary><p data-i18n="faq5A">不需要。网页只是项目介绍和下载入口。代理运行在本机，默认只监听 127.0.0.1，沿用 Codex 请求中的凭证。本地缓存保存凭证指纹、图片哈希、文件 ID 与有效期，不保存图片本体。</p></details>
+      </div>
+    </section>
+
+    <section class="closing-section"><div class="shell closing-inner"><div><p class="eyebrow">DEEPSEEK IMAGE CACHE PROXY</p><h2 data-i18n="closingTitle">下一轮，让历史图片轻一点。</h2></div><a class="button button-primary" href="#download"><span data-i18n="closingCta">选择平台并下载</span><span aria-hidden="true">↗</span></a></div></section>
+  </main>
+
+  <footer class="site-footer shell"><p><span>DeepSeek Image Cache Proxy</span><span class="footer-license" data-i18n="footerNote">开源 · MIT License · 社区项目</span></p><div><a data-readme href="https://github.com/aPuffdog/pixelpass#readme" target="_blank" rel="noopener noreferrer" data-i18n="fullDocs">完整文档</a><a href="https://github.com/aPuffdog/pixelpass/releases" target="_blank" rel="noopener noreferrer" data-i18n="releaseNotes">版本记录</a><a href="https://github.com/aPuffdog/pixelpass" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></footer>
+  <div class="toast" id="copy-toast" role="status" aria-live="polite"></div>
+</body>
+</html>

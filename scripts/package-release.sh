@@ -19,7 +19,8 @@ VERSION=$(
   cd "$PROJECT_DIR"
   "$NODE_BIN" -p "require('./package.json').version"
 )
-ARCHIVE_NAME="pixelpass-v$VERSION.tar.gz"
+MAC_ARCHIVE_NAME="pixelpass-v$VERSION-macos.tar.gz"
+WINDOWS_ARCHIVE_NAME="pixelpass-v$VERSION-windows.zip"
 STAGING_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pixelpass.XXXXXX")
 PACKAGE_DIR="$STAGING_DIR/pixelpass"
 
@@ -48,10 +49,19 @@ cp \
   "$PROJECT_DIR/pixelpass" \
   "$PROJECT_DIR/install.sh" \
   "$PROJECT_DIR/install.cmd" \
+  "$PROJECT_DIR/pixelpass.cmd" \
   "$PROJECT_DIR/package.json" \
   "$PROJECT_DIR/uninstall.sh" \
   "$PROJECT_DIR/uninstall.cmd" \
   "$PACKAGE_DIR/"
+
+# Batch files are more reliable with Windows line endings, including when the
+# release archive is built on macOS.
+for command_file in install.cmd pixelpass.cmd uninstall.cmd; do
+  awk 'BEGIN { ORS = "\r\n" } { sub(/\r$/, ""); print }' \
+    "$PACKAGE_DIR/$command_file" > "$PACKAGE_DIR/$command_file.tmp"
+  mv "$PACKAGE_DIR/$command_file.tmp" "$PACKAGE_DIR/$command_file"
+done
 
 chmod 755 \
   "$PACKAGE_DIR/deepseek-proxy" \
@@ -60,15 +70,30 @@ chmod 755 \
   "$PACKAGE_DIR/scripts/package-release.sh" \
   "$PACKAGE_DIR/uninstall.sh"
 
+rm -f \
+  "$DIST_DIR/$MAC_ARCHIVE_NAME" \
+  "$DIST_DIR/$MAC_ARCHIVE_NAME.sha256" \
+  "$DIST_DIR/$WINDOWS_ARCHIVE_NAME" \
+  "$DIST_DIR/$WINDOWS_ARCHIVE_NAME.sha256"
+
 COPYFILE_DISABLE=1 tar \
   -C "$STAGING_DIR" \
-  -czf "$DIST_DIR/$ARCHIVE_NAME" \
+  -czf "$DIST_DIR/$MAC_ARCHIVE_NAME" \
   pixelpass
 
 (
-  cd "$DIST_DIR"
-  shasum -a 256 "$ARCHIVE_NAME" > "$ARCHIVE_NAME.sha256"
+  cd "$STAGING_DIR"
+  zip -q -r -X "$DIST_DIR/$WINDOWS_ARCHIVE_NAME" pixelpass
 )
 
-printf '%s\n' "$DIST_DIR/$ARCHIVE_NAME"
-printf '%s\n' "$DIST_DIR/$ARCHIVE_NAME.sha256"
+(
+  cd "$DIST_DIR"
+  shasum -a 256 "$MAC_ARCHIVE_NAME" > "$MAC_ARCHIVE_NAME.sha256"
+  shasum -a 256 "$WINDOWS_ARCHIVE_NAME" > "$WINDOWS_ARCHIVE_NAME.sha256"
+)
+
+printf '%s\n' \
+  "$DIST_DIR/$MAC_ARCHIVE_NAME" \
+  "$DIST_DIR/$MAC_ARCHIVE_NAME.sha256" \
+  "$DIST_DIR/$WINDOWS_ARCHIVE_NAME" \
+  "$DIST_DIR/$WINDOWS_ARCHIVE_NAME.sha256"

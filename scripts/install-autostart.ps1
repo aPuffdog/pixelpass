@@ -22,8 +22,19 @@ $ProxyBaseUrl = "http://127.0.0.1:$Port"
 $HealthUrl = "$ProxyBaseUrl/__media_proxy/health"
 $User = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 
-if (-not (Get-Command node.exe -ErrorAction SilentlyContinue)) {
-    throw "Node.js is not available on PATH"
+$NodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+if (-not $NodeCommand) {
+    $nodeCandidates = @(
+        (Join-Path $env:LOCALAPPDATA "Programs\nodejs\node.exe"),
+        (Join-Path $env:ProgramFiles "nodejs\node.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "nodejs\node.exe")
+    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+    $NodePath = $nodeCandidates | Select-Object -First 1
+} else {
+    $NodePath = $NodeCommand.Source
+}
+if (-not $NodePath -or -not (Test-Path -LiteralPath $NodePath)) {
+    throw "Node.js 22.15+ was not found. Install Node.js or add node.exe to PATH, then run this installer again."
 }
 if (-not (Test-Path -LiteralPath $RunScript)) {
     throw "Run script is missing: $RunScript"
@@ -77,7 +88,8 @@ $arguments = @(
     '-ExecutionPolicy Bypass',
     '-WindowStyle Hidden',
     "-File `"$RunScript`"",
-    "-Port $Port"
+    "-Port $Port",
+    "-NodePath `"$NodePath`""
 ) -join " "
 
 $action = New-ScheduledTaskAction `

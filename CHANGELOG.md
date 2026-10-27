@@ -1,9 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 - 2026-10-27
 
-- Present the project as DeepSeek Image Cache Proxy with Chinese and English GitHub landing pages, responsive visual explainers, and release-package language parity.
-- Explain the native DeepSeek Files API, the Codex integration gap, server-generated file IDs, and the complete image lifecycle with matching bilingual diagrams.
+- Publish distinct macOS TAR.GZ and Windows ZIP release assets, each with a
+  checksum, instead of directing Windows users to GitHub's source-code archive.
+- Add Windows `pixelpass.cmd on/status/off` controls and propagate installer
+  exit codes so a stopped proxy cannot be mistaken for a completed shutdown.
+- Add Windows CI for proxy tests, JavaScript syntax, PowerShell parsing, and a real install/status/stop/start/off lifecycle.
+- Publish the bilingual static homepage through GitHub Pages with platform
+  downloads, installation steps, copyable commands, and the image lifecycle.
+- Present the project as DeepSeek Image Cache Proxy with Chinese and English
+  GitHub landing pages, responsive visual explainers, and release-package
+  language parity.
+- Explain the native DeepSeek Files API, the Codex integration gap,
+  server-generated file IDs, and the complete image lifecycle with matching
+  bilingual diagrams.
 
 ## 0.3.0 - 2026-10-27
 

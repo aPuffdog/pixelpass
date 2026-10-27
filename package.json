@@ -1,6 +1,6 @@
 {
   "name": "@apuffdog/pixelpass",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Local proxy for Codex and DeepSeek image-heavy sessions; deduplicates repeated inline images into cached DeepSeek file IDs.",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/aPuffdog/pixelpass.git"
   },
-  "homepage": "https://github.com/aPuffdog/pixelpass#readme",
+  "homepage": "https://apuffdog.github.io/pixelpass/",
   "bugs": {
     "url": "https://github.com/aPuffdog/pixelpass/issues"
   },
@@ -22,6 +22,7 @@
     "install.sh",
     "uninstall.sh",
     "install.cmd",
+    "pixelpass.cmd",
     "uninstall.cmd",
     "src/",
     "scripts/",
