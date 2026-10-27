@@ -26,5 +26,5 @@ jobs:
         run: sh scripts/package-release.sh
       - name: Inspect release archive
         run: |
-          tar -tzf dist/deepseek-media-proxy-v*.tar.gz
+          tar -tzf dist/pixelpass-v*.tar.gz
           (cd dist && shasum -a 256 -c ./*.sha256)

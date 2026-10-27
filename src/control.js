@@ -20,7 +20,7 @@ import {
 
 const LABEL = "com.codex.deepseek-media-proxy";
 const DEFAULT_UPSTREAM = "https://api.deepseek.com";
-const CLI_NAME = "deepseek-proxy";
+const CLI_NAME = process.env.PIXELPASS_CLI_NAME || "pixelpass";
 const UID = typeof process.getuid === "function" ? process.getuid() : null;
 const DOMAIN = UID === null ? null : `gui/${UID}`;
 const HOME = os.homedir();
@@ -373,7 +373,7 @@ async function status() {
   const data = stats.json || {};
   const lastRequest = data.lastRequest || null;
 
-  print(paint("bold", "DeepSeek Media Proxy"));
+  print(paint("bold", "PixelPass"));
   print(
     `代理服务     ${yesNo(running, "运行中", "已停止")}  launchd=${yesNo(
       serviceLoaded,
@@ -619,7 +619,7 @@ async function doctor() {
     );
   }
 
-  print(paint("bold", "DeepSeek Media Proxy 诊断"));
+  print(paint("bold", "PixelPass 诊断"));
   for (const check of checks) {
     print(
       `${check.ok ? paint("green", "✓") : paint("red", "✗")} ` +

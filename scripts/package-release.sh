@@ -19,9 +19,9 @@ VERSION=$(
   cd "$PROJECT_DIR"
   "$NODE_BIN" -p "require('./package.json').version"
 )
-ARCHIVE_NAME="deepseek-media-proxy-v$VERSION.tar.gz"
-STAGING_DIR=$(mktemp -d "${TMPDIR:-/tmp}/deepseek-media-proxy.XXXXXX")
-PACKAGE_DIR="$STAGING_DIR/deepseek-media-proxy"
+ARCHIVE_NAME="pixelpass-v$VERSION.tar.gz"
+STAGING_DIR=$(mktemp -d "${TMPDIR:-/tmp}/pixelpass.XXXXXX")
+PACKAGE_DIR="$STAGING_DIR/pixelpass"
 
 cleanup() {
   chmod -R u+w "$STAGING_DIR" 2>/dev/null || true
@@ -34,6 +34,7 @@ mkdir -p \
   "$PACKAGE_DIR/src" \
   "$PACKAGE_DIR/scripts"
 
+cp -R "$PROJECT_DIR/docs" "$PACKAGE_DIR/"
 cp "$PROJECT_DIR"/src/*.js "$PACKAGE_DIR/src/"
 cp "$PROJECT_DIR"/scripts/* "$PACKAGE_DIR/scripts/"
 cp \
@@ -43,6 +44,7 @@ cp \
   "$PROJECT_DIR/README.md" \
   "$PROJECT_DIR/SECURITY.md" \
   "$PROJECT_DIR/deepseek-proxy" \
+  "$PROJECT_DIR/pixelpass" \
   "$PROJECT_DIR/install.sh" \
   "$PROJECT_DIR/install.cmd" \
   "$PROJECT_DIR/package.json" \
@@ -53,13 +55,14 @@ cp \
 chmod 755 \
   "$PACKAGE_DIR/deepseek-proxy" \
   "$PACKAGE_DIR/install.sh" \
+  "$PACKAGE_DIR/pixelpass" \
   "$PACKAGE_DIR/scripts/package-release.sh" \
   "$PACKAGE_DIR/uninstall.sh"
 
 COPYFILE_DISABLE=1 tar \
   -C "$STAGING_DIR" \
   -czf "$DIST_DIR/$ARCHIVE_NAME" \
-  deepseek-media-proxy
+  pixelpass
 
 (
   cd "$DIST_DIR"

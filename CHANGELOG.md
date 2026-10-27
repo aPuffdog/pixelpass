@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-10-27
+
+- Renamed the project to PixelPass.
+- Added the `pixelpass` command while preserving `deepseek-proxy` compatibility.
+- Rebuilt the README around the problem, observed results, installation, and
+  operating controls.
+- Added a visual overview covering the repeated-Base64 failure and the
+  `file_id` request path.
+
 ## 0.2.0 - 2026-10-27
 
 - Added the macOS `deepseek-proxy` control command.

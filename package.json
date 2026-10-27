@@ -1,22 +1,24 @@
 {
-  "name": "codex-deepseek-media-proxy",
-  "version": "0.2.0",
+  "name": "@apuffdog/pixelpass",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Local Codex Responses proxy that replaces inline images with DeepSeek file IDs.",
+  "description": "Keep image-heavy Codex sessions moving by replacing repeated inline images with cached DeepSeek file IDs.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aPuffdog/deepseek-media-proxy.git"
+    "url": "git+https://github.com/aPuffdog/pixelpass.git"
   },
-  "homepage": "https://github.com/aPuffdog/deepseek-media-proxy#readme",
+  "homepage": "https://github.com/aPuffdog/pixelpass#readme",
   "bugs": {
-    "url": "https://github.com/aPuffdog/deepseek-media-proxy/issues"
+    "url": "https://github.com/aPuffdog/pixelpass/issues"
   },
   "bin": {
+    "pixelpass": "./pixelpass",
     "deepseek-proxy": "./deepseek-proxy"
   },
   "files": [
     "deepseek-proxy",
+    "pixelpass",
     "install.sh",
     "uninstall.sh",
     "install.cmd",
@@ -26,6 +28,7 @@
     "README.md",
     "SECURITY.md",
     "CHANGELOG.md",
+    "docs/",
     "LICENSE",
     ".env.example"
   ],
@@ -35,7 +38,7 @@
   "scripts": {
     "start": "node src/cli.js",
     "test": "node --test",
-    "check": "node --check src/cli.js && node --check src/cache.js && node --check src/codex-config.js && node --check src/compression.js && node --check src/config.js && node --check src/control.js && node --check src/data-url.js && node --check src/deepseek-files.js && node --check src/proxy-server.js && node --check src/rewrite.js && node --check src/serialized-images.js && sh -n deepseek-proxy",
+    "check": "node --check src/cli.js && node --check src/cache.js && node --check src/codex-config.js && node --check src/compression.js && node --check src/config.js && node --check src/control.js && node --check src/data-url.js && node --check src/deepseek-files.js && node --check src/proxy-server.js && node --check src/rewrite.js && node --check src/serialized-images.js && sh -n pixelpass && sh -n deepseek-proxy",
     "package:release": "sh scripts/package-release.sh",
     "health": "node scripts/health.js",
     "live-smoke": "node scripts/live-smoke.js",

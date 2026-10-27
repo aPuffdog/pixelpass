@@ -1,219 +1,206 @@
-# Codex DeepSeek Media Proxy
+# PixelPass
 
-一个只监听本机的 Responses API 反向代理。它把 Codex 请求中的内联图片上传到
-DeepSeek Files API，再用 `file_id` 替换 Base64，避免长会话反复携带大量历史
-截图并触发 HTTP 413。
+> 让图片只上传一次，让长对话继续前行。
 
-## 快速安装（macOS）
+[![CI](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml/badge.svg)](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/aPuffdog/pixelpass)](https://github.com/aPuffdog/pixelpass/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-58d7a8.svg)](LICENSE)
+
+![PixelPass 前后对比](docs/assets/pixelpass-hero.png)
+
+PixelPass 是一个只监听本机的 Responses API 中转工具。它把 Codex 请求里反复
+出现的 Base64 图片上传到 DeepSeek Files API，并将图片替换为可缓存的
+`file_id`，从而避免图片历史撑爆 HTTP 请求体。
+
+## 它解决什么问题？
+
+当 Codex 在长会话中查看大量截图或照片时，后续每次请求都可能重新携带之前的
+Base64 图片。模型上下文也许还没有接近 token 上限，但 HTTP 请求体已经超过
+DeepSeek Responses API 的 48 MiB 限制，于是出现：
+
+```text
+413 Payload Too Large
+Failed to buffer the request body: length limit exceeded
+url: https://api.deepseek.com/responses
+```
+
+这不是增加 token 上下文就能解决的问题。PixelPass 在请求离开本机以前完成改写：
+
+```text
+Codex 历史图片（Base64）
+        ↓
+本地 SHA-256 去重与 file_id 缓存
+        ↓
+DeepSeek 只收到很小的 Responses 请求
+```
+
+## 效果怎么样？
+
+以下数据来自一次真实的长期图片会话，不是理论值：
+
+| 指标 | 不使用 PixelPass | 使用 PixelPass |
+|---|---:|---:|
+| 最近一次 183 张图片的请求体 | 约 256 MiB | 约 2.1 MiB |
+| 单次体积变化 | — | 减少约 99.2% |
+| 相同图片 | 每个请求重复上传和传输 | 命中缓存，只保留引用 |
+| 长期会话累计请求体（455 次） | 73.6 GiB | 632.8 MiB |
+| 实测缓存复用 | — | 52,382 张次 |
+
+实际节省取决于图片数量、会话长度和缓存命中率。PixelPass 解决的是**请求体
+字节数**，不会减少图片自身消耗的视觉 token。
+
+## 快速开始
 
 环境要求：
 
 - macOS
-- 已配置为 DeepSeek Responses provider 的 Codex
-- Node.js 22.15 或更高版本；Codex 自带的 Node.js 也可使用
+- 已经配置 DeepSeek Responses provider 的 Codex
+- Node.js 22.15+；也可以使用 Codex 自带的 Node.js
 
-从源码目录安装：
+克隆并安装：
 
 ```bash
-git clone https://github.com/aPuffdog/deepseek-media-proxy.git
-cd deepseek-media-proxy
+git clone https://github.com/aPuffdog/pixelpass.git
+cd pixelpass
 ./install.sh
-```
-
-或者从 GitHub Release 下载 `deepseek-media-proxy-v*.tar.gz`：
-
-```bash
-tar -xzf deepseek-media-proxy-v*.tar.gz
-cd deepseek-media-proxy
-./install.sh
-```
-
-安装完成后完全退出并重新打开 Codex，再新建或 fork 任务。以后使用：
-
-```bash
-./deepseek-proxy status
-./deepseek-proxy off
-```
-
-`install.sh` 不会读取、打印或复制 API Key。它启动本地代理，健康检查通过后
-自动备份 Codex 配置，并只修改当前 provider 的 `base_url`。
-
-## 当前能力
-
-- 拦截 `POST /responses` 和 `POST /v1/responses`。
-- 支持 gzip、deflate、Brotli 和 zstd 请求体。
-- 处理用户消息、`function_call_output` 和 `custom_tool_call_output` 中的图片。
-- 按图片内容 SHA-256 去重。
-- 将哈希到 DeepSeek `file_id` 的映射持久化到本地缓存。
-- 原样流式转发上游 SSE 响应。
-- 提供健康状态和聚合统计，不记录 prompt、图片或凭证。
-- 其他上游路径，例如模型探测，直接透传。
-
-Codex 当前模型必须使用 `wire_api = "responses"` 的 HTTP 传输，并且 DeepSeek
-模型支持 `input_image.file_id`。托管模式使用 Node.js 24 验证。
-
-可选的 DeepSeek 实机连通测试会上传一张 1×1 PNG、发送一次最小 Responses
-请求，并立即删除该测试文件：
-
-```powershell
-$env:DEEPSEEK_API_KEY = "<your key>"
-npm run live-smoke
-```
-
-### macOS 统一控制
-
-在项目目录执行可执行控制脚本：
-
-```bash
-./deepseek-proxy status
-./deepseek-proxy on
-./deepseek-proxy off
-```
-
-- `status`：查看代理是否运行、Codex 是否经过代理，以及图片上传和请求体缩减统计。
-- `on`：安装并启动当前用户登录时运行的 LaunchAgent，健康检查通过后把 Codex
-  当前 provider 切换到本地代理。修改前自动备份 Codex 配置。
-- `off`：先把 Codex 恢复为最初记录的 DeepSeek 直连地址，再停止代理。
-- `start` / `stop` / `restart`：只控制代理进程，不修改 Codex 配置。
-- `doctor`：检查 Node.js、Codex 配置、代理健康和路由是否一致。
-
-`on` 或 `off` 修改配置后，需要完全退出并重新打开 Codex，再新建或 fork 任务。
-只执行 `start` 不会让 Codex 自动使用代理。
-
-macOS 托管模式默认允许最大 `1 GiB` 的 Responses 请求体。超过约 `480 MiB`
-时会使用 Buffer 级图片替换，避免把超大请求转换成超过 Node.js 单字符串上限的
-JavaScript 字符串。这个上限只解决本地代理入口；DeepSeek 最终收到的仍是
-`file_id` 小请求。
-
-### 手动运行
-
-```bash
-npm test
-npm start
-```
-
-默认监听：
-
-```text
-http://127.0.0.1:17892
-```
-
-检查状态：
-
-```powershell
-npm run health
-Invoke-RestMethod http://127.0.0.1:17892/__media_proxy/stats |
-  ConvertTo-Json -Depth 5
-```
-
-统计中的 `incomingResponsesBytes` 和 `outgoingResponsesBytes` 分别表示改写前后
-的 Responses 请求体字节数。`lastRequest` 保留最近一次请求的明细。
-
-## 接入 Codex
-
-### Windows 旧版脚本
-
-Windows 继续提供原有的计划任务脚本。新的统一 `deepseek-proxy` 控制入口目前
-只在 macOS 上实现。
-
-在资源管理器中双击 `install.cmd`，或运行：
-
-```powershell
-.\scripts\install-autostart.ps1
 ```
 
 安装脚本会：
 
-1. 注册当前 Windows 用户的登录计划任务。
-2. 立即启动隐藏的本地代理并等待健康检查通过。
-3. 备份 `~/.codex/config.toml`。
-4. 只把 `[model_providers.custom].base_url` 改成
-   `http://127.0.0.1:17892`。
-5. 保存安装信息，便于以后恢复原 provider 地址。
+1. 启动仅监听 `127.0.0.1:17892` 的本地代理。
+2. 注册当前用户的 macOS LaunchAgent。
+3. 等待健康检查通过。
+4. 备份 `~/.codex/config.toml`。
+5. 只修改当前 provider 的 `base_url`。
 
-完成后重启 Codex 一次。以后正常登录 Windows，再点击 Codex，代理会在后台
-自动启动，不需要打开终端。
+安装后**完全退出并重新打开 Codex**，再新建或 fork 一个任务。
 
-查看状态：
+检查状态：
 
-```powershell
-.\scripts\status.ps1
+```bash
+./pixelpass status
 ```
 
-停止、启动或重启后台代理：
+关闭整套服务并恢复 Codex 直连：
 
-```powershell
-.\scripts\service.ps1 stop
-.\scripts\service.ps1 start
-.\scripts\service.ps1 restart
+```bash
+./pixelpass off
 ```
 
-卸载并恢复 Codex 原地址：
+PixelPass 使用 Codex 原本发送的认证信息，不需要额外复制或填写 API Key。
 
-```powershell
-.\uninstall.cmd
-```
+## 日常控制
 
-### 手动接入
+| 命令 | 作用 |
+|---|---|
+| `./pixelpass status` | 查看代理、Codex 路由、图片和请求体统计 |
+| `./pixelpass on` | 启动代理并让 Codex 经过代理 |
+| `./pixelpass off` | 恢复 Codex 直连并关闭代理 |
+| `./pixelpass start` | 只启动代理，不修改 Codex 配置 |
+| `./pixelpass stop` | 只停止代理，不修改 Codex 配置 |
+| `./pixelpass restart` | 重启代理 |
+| `./pixelpass doctor` | 检查运行时、配置、健康状态和路由 |
 
-先保持代理运行，再修改 `~/.codex/config.toml` 中现有的 provider：
+旧命令 `./deepseek-proxy` 继续保留，避免已有安装失效。
 
-```toml
-[model_providers.custom]
-base_url = "http://127.0.0.1:17892"
-wire_api = "responses"
-```
-
-修改后重启 Codex，并新建或 fork 一个任务。Codex 会在任务创建时固定 provider
-路由，已经打开的任务不一定会切换到本地代理。
-
-手动接入不会改动计划任务或安装信息；仍然需要自行备份和修改 provider 地址。
-
-## 工作方式
+## 工作原理
 
 ```text
 Codex
-  -> http://127.0.0.1:17892/responses
-  -> 解压请求
-  -> 递归查找 image_url: data:image/...
-  -> SHA-256 去重
-  -> 未命中时上传 DeepSeek POST /files
-  -> image_url 替换为 file_id
-  -> https://api.deepseek.com/responses
-  -> 原样流式返回 SSE
+  → POST http://127.0.0.1:17892/responses
+  → PixelPass 解压 gzip / deflate / Brotli / zstd
+  → 提取 input_image 中的 Base64 图片
+  → SHA-256 去重并查询本地缓存
+  → 未命中：上传 DeepSeek POST /files
+  → image_url 替换为 file_id
+  → 转发到 https://api.deepseek.com/responses
+  → 原样流式返回响应
 ```
 
-本地会话文件不会被修改。改写只发生在每次将要发给 DeepSeek 的 HTTP 请求上。
+包含数百张图片、超过 Node.js 单字符串长度的大请求会使用 Buffer 级改写路径。
+macOS 托管模式默认允许最高 1 GiB 的本地请求体，最终发给 DeepSeek 的仍是轻量
+`file_id` 请求。
+
+## 安全与隐私
+
+- 默认只绑定 `127.0.0.1`，不对局域网或公网开放。
+- 不记录 prompt、图片内容、Authorization 或 API Key。
+- 本地缓存只保存账号指纹、图片哈希、DeepSeek `file_id`、大小和过期时间。
+- 修改 Codex 配置前自动备份；`off` 会优先恢复直连再停止代理。
+- 上传失败时默认终止请求，不会静默退回可能触发 413 的 Base64。
+- 图片由 DeepSeek 账户侧保存，默认 30 天过期。
+- 缓存和 Codex 配置不会被打进 GitHub 发布包。
+
+## 常见问题
+
+### `status` 显示“直连 DeepSeek”
+
+代理可能启动了，但 Codex 还没有接管。执行：
+
+```bash
+./pixelpass on
+```
+
+然后完全退出并重新打开 Codex，新建或 fork 任务。
+
+### 仍出现 `127.0.0.1:17892` 的 413
+
+这是 PixelPass 的本地入口限制，而不是 DeepSeek 上游限制。先运行 `status`
+查看入口上限；如果会话长期无限增长，建议另开任务并携带一份简短交接摘要。
+
+### 出现 `api.deepseek.com/responses` 的 413
+
+这说明请求没有正确经过 PixelPass，或者上游仍收到内联图片。运行：
+
+```bash
+./pixelpass doctor
+./pixelpass status
+```
+
+### 图片上传失败
+
+检查 `status` 中的 `lastError`，并确认当前 DeepSeek 模型和账户支持
+`input_image.file_id`。默认不会回退到 Base64。
 
 ## 配置
 
-可以通过环境变量调整：
-
-| 变量 | 默认值 | 说明 |
+| 环境变量 | 默认值 | 说明 |
 |---|---:|---|
 | `MEDIA_PROXY_HOST` | `127.0.0.1` | 监听地址，不建议修改 |
 | `MEDIA_PROXY_PORT` | `17892` | 本地端口 |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | 上游地址 |
-| `MEDIA_PROXY_FILE_TTL_SECONDS` | `2592000` | DeepSeek 文件 30 天过期；`0` 表示永久 |
-| `MEDIA_PROXY_MAX_REQUEST_BYTES` | `268435456` | 手动运行时默认值；macOS 托管模式为 `1073741824` |
+| `MEDIA_PROXY_FILE_TTL_SECONDS` | `2592000` | 文件 30 天过期；`0` 表示永久 |
+| `MEDIA_PROXY_MAX_REQUEST_BYTES` | `1073741824` | macOS 托管入口上限，1 GiB |
 | `MEDIA_PROXY_UPLOAD_CONCURRENCY` | `4` | 单次请求并发上传数 |
 | `MEDIA_PROXY_UPLOAD_RETRIES` | `3` | 上传重试次数 |
-| `MEDIA_PROXY_ALLOW_INLINE_FALLBACK` | `false` | 上传失败时是否退回内联图片 |
-
-默认选择失败即报错，避免在用户不知情时继续发送一个可能触发 413 的请求。
-
-## 安全边界
-
-- 服务默认且建议只绑定 `127.0.0.1`。
-- 代理会转发 Codex 自带认证头，但不会把凭证写进日志或缓存。
-- 缓存只保存账号凭证指纹、图片哈希、文件 ID、大小和过期时间。
-- 图片内容不会写入代理缓存。
-- DeepSeek Files API 会让图片成为账户侧文件；默认设置 30 天过期。
+| `MEDIA_PROXY_ALLOW_INLINE_FALLBACK` | `false` | 是否允许失败后回退 Base64 |
 
 ## 已知限制
 
-- 目前只实现 HTTP Responses，不支持 WebSocket。
-- 支持 PNG、JPEG、WebP 和 GIF，与 DeepSeek 当前图片格式一致。
-- `file_id` 解决请求体字节数，不消除图片 token 和模型处理成本。
-- DeepSeek 文件 ID 只属于 DeepSeek 账户，不能与 OpenAI 或其他 provider 混用。
-- 当前没有桌面控制面板；状态通过本地 health/stats JSON 查看。
+- 统一控制入口目前只实现了 macOS LaunchAgent；Windows 保留旧版计划任务脚本。
+- 仅处理 HTTP Responses API，不支持 WebSocket。
+- 支持 PNG、JPEG、WebP、GIF。
+- `file_id` 只属于 DeepSeek 账户，不能发给其他 provider。
+- 不会减少图片 token，也不会替用户筛选动画帧或关键截图。
+
+## 开发
+
+```bash
+node --test tests/*.test.js
+npm run check
+npm run package:release
+```
+
+打包会生成：
+
+```text
+dist/pixelpass-v<version>.tar.gz
+dist/pixelpass-v<version>.tar.gz.sha256
+```
+
+测试使用 Codex 自带的 Node.js 24.22.1 验证；GitHub Actions 会在 macOS 上重复
+执行测试、语法检查和发布包校验。
+
+## License
+
+[MIT](LICENSE)

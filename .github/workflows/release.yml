@@ -26,5 +26,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "DeepSeek Media Proxy $GITHUB_REF_NAME" \
+            --title "PixelPass $GITHUB_REF_NAME" \
             --generate-notes
