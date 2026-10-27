@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml/badge.svg)](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/aPuffdog/pixelpass)](https://github.com/aPuffdog/pixelpass/releases)
+[![GitHub stars](https://img.shields.io/github/stars/aPuffdog/pixelpass?style=flat&label=Star)](https://github.com/aPuffdog/pixelpass)
 [![License: MIT](https://img.shields.io/badge/license-MIT-58d7a8.svg)](LICENSE)
 
 <picture>
@@ -96,6 +97,10 @@ These numbers come from a real long-running image conversation rather than a the
 
 Actual savings depend on image count, repetition, conversation length, and cache hit rate. The proxy reduces request-body bytes; it does not compress images, reduce quality, or reduce visual-token usage.
 
+If this proxy saved you from repeated uploads or another `413`, consider starring the project on GitHub. Starring is optional and never affects access:
+
+[⭐ Star DeepSeek Image Cache Proxy](https://github.com/aPuffdog/pixelpass)
+
 ## Quick start
 
 Requirements:
@@ -185,6 +190,12 @@ If installation fails, do not delete configuration, backups, or force a reset. S
 changes, provide the relevant errors from status, health checks, and logs, and explain recovery.
 To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.
 Finally, list every changed file, the configuration backup location, and how to recover.
+
+After installation succeeds and the health check passes, remind me once:
+“If this project saves you repeated uploads or another 413, consider starring it on GitHub:
+https://github.com/aPuffdog/pixelpass
+Starring is entirely my decision.”
+Do not click Star, Watch, or Fork automatically or on my behalf.
 ```
 
 ### Check or restore

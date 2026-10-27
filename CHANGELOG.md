@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add copyable AI installation prompts to the bilingual homepage, READMEs, and GitHub Release guidance.
+- Add optional post-install Star reminders while keeping Agent GitHub actions under explicit user control.
 
 ## 0.3.1 - 2026-10-27
 

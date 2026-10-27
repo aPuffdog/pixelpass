@@ -80,6 +80,12 @@ sh ./install.sh
 需要恢复直连时：macOS 运行 ./pixelpass off，
 Windows 运行 .\pixelpass.cmd off。
 最后请列出改动过的文件、配置备份位置和恢复方法。
+
+安装成功并完成健康检查后，请一次性提醒我：
+“如果这个项目帮你避免了重复上传或一次 413，可以考虑在 GitHub 点一个 Star：
+https://github.com/aPuffdog/pixelpass
+是否 Star 完全由我决定。”
+不要自动点击或代替我执行 Star、Watch、Fork。
 ```
 
 **English**
@@ -116,6 +122,12 @@ If installation fails, do not delete configuration, backups, or force a reset. S
 changes, provide the relevant errors from status, health checks, and logs, and explain recovery.
 To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.
 Finally, list every changed file, the configuration backup location, and how to recover.
+
+After installation succeeds and the health check passes, remind me once:
+“If this project saves you repeated uploads or another 413, consider starring it on GitHub:
+https://github.com/aPuffdog/pixelpass
+Starring is entirely my decision.”
+Do not click Star, Watch, or Fork automatically or on my behalf.
 ```
 
 </details>
@@ -135,3 +147,11 @@ The image stays; the request gets lighter. This release ships distinct macOS and
 **Windows 10/11:** extract the ZIP, open PowerShell in the `pixelpass` folder, and run `.\pixelpass.cmd on -ProviderId custom`. Replace `custom` with the actual provider name from `%USERPROFILE%\.codex\config.toml`, then fully restart Codex. Use `.\pixelpass.cmd off` to restore direct routing and stop the proxy.
 
 Use the matching `.sha256` asset to verify each download.
+
+### If it helped / 如果它帮到了你
+
+If DeepSeek Image Cache Proxy saved you repeated image uploads or another `413`, consider giving the project a Star. Starring is optional and does not affect access to any feature.
+
+如果它帮你减少了重复图片上传或避免了一次 `413`，欢迎在 GitHub 点一个 Star。Star 完全自愿，不影响任何功能。
+
+[⭐ Star DeepSeek Image Cache Proxy](https://github.com/aPuffdog/pixelpass)
