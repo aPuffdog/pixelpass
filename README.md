@@ -150,7 +150,7 @@ Windows 入口与 macOS 保持一致：
 1. 判断系统是 macOS 还是 Windows 10/11。
 2. 检查 Node.js 版本是否不低于 22.15，并确认 node 命令可用。
 3. 检查 ~/.codex/config.toml，Windows 为 %USERPROFILE%\.codex\config.toml，
-   找出当前用于 DeepSeek 的 model_providers.<id>。
+   读取顶层 model_provider，并确认对应的 model_providers.<id> 用于 DeepSeek。
 4. 把系统、Node 版本、准备使用的 provider 名称和将执行的命令告诉我，
    等我确认后再继续。
 
@@ -172,6 +172,7 @@ Windows 入口与 macOS 保持一致：
 提供 status、健康检查和日志中的关键错误，并告诉我如何恢复。
 需要恢复直连时：macOS 运行 ./pixelpass off，
 Windows 运行 .\pixelpass.cmd off。
+最后请列出改动过的文件、配置备份位置和恢复方法。
 ```
 
 ### 检查与恢复

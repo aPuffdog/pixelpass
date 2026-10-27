@@ -49,7 +49,7 @@ const aiInstallPrompts = {
 1. 判断系统是 macOS 还是 Windows 10/11。
 2. 检查 Node.js 版本是否不低于 22.15，并确认 node 命令可用。
 3. 检查 ~/.codex/config.toml，Windows 为 %USERPROFILE%\.codex\config.toml，
-   找出当前用于 DeepSeek 的 model_providers.<id>。
+   读取顶层 model_provider，并确认对应的 model_providers.<id> 用于 DeepSeek。
 4. 把系统、Node 版本、准备使用的 provider 名称和将执行的命令告诉我，
    等我确认后再继续。
 
@@ -70,7 +70,8 @@ const aiInstallPrompts = {
 如果安装失败，不要删除配置、备份或强制重置。停止后续步骤，
 提供 status、健康检查和日志中的关键错误，并告诉我如何恢复。
 需要恢复直连时：macOS 运行 ./pixelpass off，
-Windows 运行 .\pixelpass.cmd off。`,
+Windows 运行 .\pixelpass.cmd off。
+最后请列出改动过的文件、配置备份位置和恢复方法。`,
   en: String.raw`You are a careful installation assistant. Install and verify “DeepSeek Image Cache Proxy”
 on this computer. Route Codex's DeepSeek Responses requests through a localhost proxy at
 127.0.0.1:17892. I will fully quit and reopen Codex manually after installation.
@@ -78,8 +79,9 @@ on this computer. Route Codex's DeepSeek Responses requests through a localhost 
 First, inspect only and do not modify files:
 1. Determine whether this is macOS or Windows 10/11.
 2. Check that Node.js is version 22.15 or newer and that the node command works.
-3. Inspect ~/.codex/config.toml, or %USERPROFILE%\.codex\config.toml on Windows,
-   and find the model_providers.<id> currently used for DeepSeek.
+3. Inspect ~/.codex/config.toml, or %USERPROFILE%\.codex\config.toml on Windows.
+   Read the top-level model_provider and confirm that its model_providers.<id>
+   section is used for DeepSeek.
 4. Show me the operating system, Node.js version, provider name, and commands you plan
    to run. Wait for my confirmation before continuing.
 
@@ -99,7 +101,8 @@ After I confirm:
 
 If installation fails, do not delete configuration, backups, or force a reset. Stop further
 changes, provide the relevant errors from status, health checks, and logs, and explain recovery.
-To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.`
+To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.
+Finally, list every changed file, the configuration backup location, and how to recover.`
 };
 
 let savedLang;
@@ -167,7 +170,9 @@ document.querySelectorAll("[data-copy]").forEach((button) => button.addEventList
   const text = document.querySelector("#" + button.dataset.copy)?.textContent || "";
   try {
     await navigator.clipboard.writeText(text);
-    copyToast.textContent = currentLang === "zh-CN" ? "命令已复制" : "Command copied";
+    copyToast.textContent = button.dataset.copy === "ai-install-prompt"
+      ? (currentLang === "zh-CN" ? "AI 安装提示词已复制" : "AI install prompt copied")
+      : (currentLang === "zh-CN" ? "命令已复制" : "Command copied");
   } catch {
     const code = document.querySelector("#" + button.dataset.copy);
     const range = document.createRange();
@@ -175,7 +180,9 @@ document.querySelectorAll("[data-copy]").forEach((button) => button.addEventList
     const selection = getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    copyToast.textContent = currentLang === "zh-CN" ? "自动复制不可用，命令已选中，请按 ⌘C / Ctrl+C" : "Clipboard unavailable. Command selected; press ⌘C / Ctrl+C.";
+    copyToast.textContent = button.dataset.copy === "ai-install-prompt"
+      ? (currentLang === "zh-CN" ? "提示词已选中，请按 ⌘C / Ctrl+C" : "Prompt selected; press ⌘C / Ctrl+C.")
+      : (currentLang === "zh-CN" ? "自动复制不可用，命令已选中，请按 ⌘C / Ctrl+C" : "Clipboard unavailable. Command selected; press ⌘C / Ctrl+C.");
   }
   copyToast.classList.add("is-visible");
   setTimeout(() => copyToast.classList.remove("is-visible"), 1800);
