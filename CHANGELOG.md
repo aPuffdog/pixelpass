@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Present the project as DeepSeek Image Cache Proxy with Chinese and English GitHub landing pages, responsive visual explainers, and release-package language parity.
+- Explain the native DeepSeek Files API, the Codex integration gap, server-generated file IDs, and the complete image lifecycle with matching bilingual diagrams.
 
 ## 0.3.0 - 2026-10-27
 
