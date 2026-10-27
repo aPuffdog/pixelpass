@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek Image Cache Proxy</title>
+  <desc id="desc">A simple visual showing repeated Codex images entering a local cache and becoming a small file_id request to DeepSeek.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 1 L10 5 L0 9 Z" fill="#111"/></marker>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V8" stroke="#8b8b8b" stroke-width="1"/></pattern>
+    <style>
+      .ink{fill:#111}.muted{fill:#5f5f5f}.line{stroke:#111;stroke-width:2;fill:none}.thin{stroke:#6f6f6f;stroke-width:1.2;fill:none}.panel{fill:#fff;stroke:#111;stroke-width:2}.soft{fill:#eeeeee;stroke:#111;stroke-width:1.5}.hatch{fill:url(#hatch);stroke:#111;stroke-width:1.5}.label{font:700 18px Arial,"Helvetica Neue",sans-serif;letter-spacing:3px;fill:#111}.caption{font:400 20px Arial,"Helvetica Neue",sans-serif;fill:#303030}.small{font:400 16px Arial,"Helvetica Neue",sans-serif;fill:#5f5f5f}.number{font:700 68px Arial,"Helvetica Neue",sans-serif;fill:#111}.metric{font:700 38px Arial,"Helvetica Neue",sans-serif;fill:#111}.mono{font:700 23px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#111}.white{fill:#fff}
+    </style>
+  </defs>
+
+  <rect width="1600" height="820" fill="#f2f2f2"/>
+  <rect x="34" y="34" width="1532" height="752" rx="24" fill="#fff" stroke="#111" stroke-width="2"/>
+
+  <text x="82" y="92" class="label">DEEPSEEK IMAGE CACHE PROXY</text>
+  <text x="82" y="132" class="caption">Keep image-heavy Codex conversations below the request-size limit.</text>
+  <text x="1518" y="92" text-anchor="end" class="small">LOCAL ONLY · 127.0.0.1:17892</text>
+  <line x1="82" y1="165" x2="1518" y2="165" class="thin"/>
+
+  <!-- source -->
+  <rect x="98" y="228" width="360" height="350" rx="18" class="panel"/>
+  <text x="130" y="270" class="label">CODEX</text>
+  <text x="130" y="302" class="small">REPEATED IMAGE HISTORY</text>
+  <g transform="translate(132 338)">
+    <rect x="0" y="26" width="82" height="112" rx="8" class="hatch"/>
+    <rect x="94" y="18" width="82" height="112" rx="8" class="hatch"/>
+    <rect x="188" y="10" width="82" height="112" rx="8" class="hatch"/>
+    <rect x="282" y="2" width="82" height="112" rx="8" class="hatch"/>
+    <path d="M36 145h260" class="thin"/>
+    <path d="M36 145l-11 -7v14zM296 145l11 -7v14z" fill="#111"/>
+    <text x="166" y="178" text-anchor="middle" class="mono">BASE64 × 183</text>
+  </g>
+  <rect x="130" y="530" width="296" height="38" rx="19" class="soft"/>
+  <text x="278" y="555" text-anchor="middle" class="mono">256 MiB  →  413</text>
+
+  <!-- arrow 1 -->
+  <line x1="480" y1="380" x2="590" y2="380" class="line" marker-end="url(#arrow)"/>
+  <text x="535" y="350" text-anchor="middle" class="small">REPEATED DATA</text>
+
+  <!-- cache -->
+  <rect x="616" y="198" width="368" height="360" rx="22" class="panel"/>
+  <circle cx="800" cy="296" r="68" class="soft"/>
+  <path d="M768 296h64M800 264v64M777 273l46 46M823 273l-46 46" class="line"/>
+  <text x="800" y="385" text-anchor="middle" class="label">LOCAL CACHE</text>
+  <text x="800" y="416" text-anchor="middle" class="small">SHA-256  →  FILE_ID</text>
+  <rect x="680" y="454" width="240" height="42" rx="21" class="soft"/>
+  <text x="800" y="481" text-anchor="middle" class="mono">same image = one upload</text>
+
+  <!-- arrow 2 -->
+  <line x1="1006" y1="380" x2="1116" y2="380" class="line" marker-end="url(#arrow)"/>
+  <text x="1061" y="350" text-anchor="middle" class="small">REFERENCE ONLY</text>
+
+  <!-- destination -->
+  <rect x="1142" y="228" width="360" height="300" rx="18" class="panel"/>
+  <text x="1174" y="270" class="label">DEEPSEEK</text>
+  <text x="1174" y="302" class="small">RESPONSES API</text>
+  <rect x="1190" y="350" width="118" height="92" rx="12" class="soft"/>
+  <text x="1249" y="405" text-anchor="middle" class="mono">file_id</text>
+  <line x1="1344" y1="396" x2="1406" y2="396" class="line" marker-end="url(#arrow)"/>
+  <text x="1428" y="386" class="small">SMALL</text>
+  <text x="1428" y="412" class="small">REQUEST</text>
+  <rect x="1174" y="472" width="296" height="38" rx="19" class="soft"/>
+  <text x="1322" y="497" text-anchor="middle" class="mono">2.1 MiB  →  OK</text>
+
+  <!-- results -->
+  <line x1="82" y1="610" x2="1518" y2="610" class="thin"/>
+  <text x="82" y="657" class="small">OBSERVED IN ONE LONG IMAGE-HEAVY SESSION</text>
+  <text x="82" y="720" class="number">256 MiB</text>
+  <text x="356" y="720" class="metric">→ 2.1 MiB</text>
+  <text x="650" y="720" class="metric">99.2% smaller</text>
+  <text x="1070" y="720" class="metric">52,382 reused references</text>
+  <text x="82" y="756" class="small">The image stays the same. Only the request representation changes.</text>
+  <text x="1518" y="756" text-anchor="end" class="small">No prompt or image bytes are logged locally.</text>
+</svg>

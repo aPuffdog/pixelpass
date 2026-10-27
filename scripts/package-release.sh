@@ -42,6 +42,7 @@ cp \
   "$PROJECT_DIR/CHANGELOG.md" \
   "$PROJECT_DIR/LICENSE" \
   "$PROJECT_DIR/README.md" \
+  "$PROJECT_DIR/README.en.md" \
   "$PROJECT_DIR/SECURITY.md" \
   "$PROJECT_DIR/deepseek-proxy" \
   "$PROJECT_DIR/pixelpass" \

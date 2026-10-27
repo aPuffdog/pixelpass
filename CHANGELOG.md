@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Present the project as DeepSeek Image Cache Proxy with Chinese and English GitHub landing pages, responsive visual explainers, and release-package language parity.
+
 ## 0.3.0 - 2026-10-27
 
 - Renamed the project to PixelPass.

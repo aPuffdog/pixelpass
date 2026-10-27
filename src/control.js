@@ -373,7 +373,7 @@ async function status() {
   const data = stats.json || {};
   const lastRequest = data.lastRequest || null;
 
-  print(paint("bold", "PixelPass"));
+  print(paint("bold", "DeepSeek Image Cache Proxy"));
   print(
     `代理服务     ${yesNo(running, "运行中", "已停止")}  launchd=${yesNo(
       serviceLoaded,
@@ -619,7 +619,7 @@ async function doctor() {
     );
   }
 
-  print(paint("bold", "PixelPass 诊断"));
+  print(paint("bold", "DeepSeek Image Cache Proxy 诊断"));
   for (const check of checks) {
     print(
       `${check.ok ? paint("green", "✓") : paint("red", "✗")} ` +

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Keep image-heavy Codex sessions moving by replacing repeated inline images with cached DeepSeek file IDs.",
+  "description": "Local proxy for Codex and DeepSeek image-heavy sessions; deduplicates repeated inline images into cached DeepSeek file IDs.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aPuffdog/pixelpass.git"
@@ -26,6 +26,7 @@
     "src/",
     "scripts/",
     "README.md",
+    "README.en.md",
     "SECURITY.md",
     "CHANGELOG.md",
     "docs/",

@@ -1,22 +1,25 @@
-# PixelPass
+# DeepSeek Image Cache Proxy
 
-> 让图片只上传一次，让长对话继续前行。
+**语言 / Language:** [简体中文](README.md) · [English](README.en.md)
+
+> 为 Codex 的 DeepSeek 图片请求缓存重复图片，减少长会话请求体积，避免 `413 Payload Too Large`。
 
 [![CI](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml/badge.svg)](https://github.com/aPuffdog/pixelpass/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/aPuffdog/pixelpass)](https://github.com/aPuffdog/pixelpass/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-58d7a8.svg)](LICENSE)
 
-![PixelPass 前后对比](docs/assets/pixelpass-hero.png)
+<picture>
+  <source media="(max-width: 600px)" srcset="docs/assets/deepseek-image-cache-proxy.zh-CN-mobile.png">
+  <img src="docs/assets/deepseek-image-cache-proxy.zh-CN.png" alt="重复图片经本机缓存识别：首次上传一次，后续复用 file_id；一次实测请求从 256 MiB 降到 2.1 MiB">
+</picture>
 
-PixelPass 是一个只监听本机的 Responses API 中转工具。它把 Codex 请求里反复
-出现的 Base64 图片上传到 DeepSeek Files API，并将图片替换为可缓存的
-`file_id`，从而避免图片历史撑爆 HTTP 请求体。
+DeepSeek Image Cache Proxy 是一个运行在本机的 Responses API 代理。长对话里，Codex 可能在后续请求中反复携带历史图片的 Base64 数据；图片越多，请求体越大，最终可能在模型上下文达到上限前就被 DeepSeek 拒绝。
+
+代理会识别重复图片、将新图片上传到 DeepSeek Files API，并把请求中的 Base64 图片替换成可复用的 `file_id`。这样 DeepSeek 收到的是小得多的请求，而 Codex 仍按原来的方式发起对话。
 
 ## 它解决什么问题？
 
-当 Codex 在长会话中查看大量截图或照片时，后续每次请求都可能重新携带之前的
-Base64 图片。模型上下文也许还没有接近 token 上限，但 HTTP 请求体已经超过
-DeepSeek Responses API 的 48 MiB 限制，于是出现：
+当请求体超过 DeepSeek Responses API 的限制时，常见报错是：
 
 ```text
 413 Payload Too Large
@@ -24,40 +27,33 @@ Failed to buffer the request body: length limit exceeded
 url: https://api.deepseek.com/responses
 ```
 
-这不是增加 token 上下文就能解决的问题。PixelPass 在请求离开本机以前完成改写：
+这通常是 HTTP 请求体过大，不代表模型 token 上下文已经用完。代理在请求离开本机前改写图片表示：
 
 ```text
 Codex 历史图片（Base64）
         ↓
-本地 SHA-256 去重与 file_id 缓存
+本机代理按图片内容计算 SHA-256，并查找缓存
         ↓
-DeepSeek 只收到很小的 Responses 请求
+新图片上传到 DeepSeek Files API，后续请求复用 file_id
+        ↓
+DeepSeek Responses API 收到更小的请求
 ```
 
-## 效果怎么样？
+## 实测效果
 
-以下数据来自一次真实的长期图片会话，不是理论值：
+以下数据来自一次真实的长期图片会话：
 
-| 指标 | 不使用 PixelPass | 使用 PixelPass |
-|---|---:|---:|
-| 最近一次 183 张图片的请求体 | 约 256 MiB | 约 2.1 MiB |
-| 单次体积变化 | — | 减少约 99.2% |
-| 相同图片 | 每个请求重复上传和传输 | 命中缓存，只保留引用 |
-| 长期会话累计请求体（455 次） | 73.6 GiB | 632.8 MiB |
-| 实测缓存复用 | — | 52,382 张次 |
+| 场景 | 原始请求体 | 使用代理后 | 变化 |
+|---|---:|---:|---:|
+| 最近一次请求，183 张图片 | 约 256 MiB | 约 2.1 MiB | 减少约 99.2% |
+| 455 次请求累计 | 73.6 GiB | 632.8 MiB | 大幅减少重复传输 |
+| 图片缓存复用 | — | 52,382 张次 | 相同图片使用已有引用 |
 
-实际节省取决于图片数量、会话长度和缓存命中率。PixelPass 解决的是**请求体
-字节数**，不会减少图片自身消耗的视觉 token。
+这些是单个会话的观测结果，实际节省取决于图片数量、重复率、会话长度和缓存命中率。代理减少的是 HTTP 请求体字节数；它不会压缩图片、降低画质或减少视觉 token。
 
-## 快速开始
+## 安装与开始使用
 
-环境要求：
-
-- macOS
-- 已经配置 DeepSeek Responses provider 的 Codex
-- Node.js 22.15+；也可以使用 Codex 自带的 Node.js
-
-克隆并安装：
+需要 macOS、Node.js 22.15 或更新版本（也可使用 Codex 自带的 Node.js），并已在 Codex 中配置 DeepSeek Responses provider。
 
 ```bash
 git clone https://github.com/aPuffdog/pixelpass.git
@@ -65,29 +61,22 @@ cd pixelpass
 ./install.sh
 ```
 
-安装脚本会：
+安装会启动只监听 `127.0.0.1:17892` 的本机代理、注册 macOS LaunchAgent，并备份后更新当前 Codex provider 的 `base_url`。安装完成后，完全退出并重新打开 Codex，再开始一个新任务或 fork 现有任务。
 
-1. 启动仅监听 `127.0.0.1:17892` 的本地代理。
-2. 注册当前用户的 macOS LaunchAgent。
-3. 等待健康检查通过。
-4. 备份 `~/.codex/config.toml`。
-5. 只修改当前 provider 的 `base_url`。
-
-安装后**完全退出并重新打开 Codex**，再新建或 fork 一个任务。
-
-检查状态：
+确认运行状态：
 
 ```bash
 ./pixelpass status
 ```
 
-关闭整套服务并恢复 Codex 直连：
+打开或关闭 Codex 代理路由：
 
 ```bash
+./pixelpass on
 ./pixelpass off
 ```
 
-PixelPass 使用 Codex 原本发送的认证信息，不需要额外复制或填写 API Key。
+`off` 会恢复 Codex 直连 DeepSeek 并关闭代理。代理使用 Codex 原有的认证信息，不需要另行复制 API Key。已有用户也可以继续使用兼容命令 `./deepseek-proxy`。
 
 ## 日常控制
 
@@ -101,66 +90,51 @@ PixelPass 使用 Codex 原本发送的认证信息，不需要额外复制或填
 | `./pixelpass restart` | 重启代理 |
 | `./pixelpass doctor` | 检查运行时、配置、健康状态和路由 |
 
-旧命令 `./deepseek-proxy` 继续保留，避免已有安装失效。
-
 ## 工作原理
+
+![DeepSeek 图片缓存代理结构图](docs/assets/deepseek-image-cache-proxy.zh-CN-sheet.png)
 
 ```text
 Codex
   → POST http://127.0.0.1:17892/responses
-  → PixelPass 解压 gzip / deflate / Brotli / zstd
+  → 解压 gzip / deflate / Brotli / zstd 请求
   → 提取 input_image 中的 Base64 图片
-  → SHA-256 去重并查询本地缓存
-  → 未命中：上传 DeepSeek POST /files
-  → image_url 替换为 file_id
+  → 按 SHA-256 去重并查找本地 file_id 缓存
+  → 缓存未命中时，上传 DeepSeek POST /files
+  → 将 image_url 替换为 file_id
   → 转发到 https://api.deepseek.com/responses
   → 原样流式返回响应
 ```
 
-包含数百张图片、超过 Node.js 单字符串长度的大请求会使用 Buffer 级改写路径。
-macOS 托管模式默认允许最高 1 GiB 的本地请求体，最终发给 DeepSeek 的仍是轻量
-`file_id` 请求。
+大量图片或超过 Node.js 单字符串长度的请求会通过 Buffer 路径改写。macOS 托管模式默认允许最高 1 GiB 的本地请求体；转发到 DeepSeek 的 Responses 请求通常只包含图片引用，首次出现的图片仍会单独上传到 Files API。
 
 ## 安全与隐私
 
-- 默认只绑定 `127.0.0.1`，不对局域网或公网开放。
+- 默认仅监听 `127.0.0.1`，不向局域网或公网开放。
 - 不记录 prompt、图片内容、Authorization 或 API Key。
 - 本地缓存只保存账号指纹、图片哈希、DeepSeek `file_id`、大小和过期时间。
-- 修改 Codex 配置前自动备份；`off` 会优先恢复直连再停止代理。
-- 上传失败时默认终止请求，不会静默退回可能触发 413 的 Base64。
+- 修改 Codex 配置前会自动备份；`off` 会优先恢复直连再停止代理。
+- 上传失败时默认终止请求，不会静默回退到可能过大的 Base64 请求。
 - 图片由 DeepSeek 账户侧保存，默认 30 天过期。
-- 缓存和 Codex 配置不会被打进 GitHub 发布包。
+- 缓存和 Codex 配置不会被放入 GitHub 发布包。
 
 ## 常见问题
 
-### `status` 显示“直连 DeepSeek”
+### 状态显示“直连 DeepSeek”
 
-代理可能启动了，但 Codex 还没有接管。执行：
+代理可能已运行，但 Codex 路由尚未启用。执行 `./pixelpass on`，完全退出并重新打开 Codex，再新建或 fork 一个任务。
 
-```bash
-./pixelpass on
-```
+### 仍然收到 `127.0.0.1:17892` 的 413
 
-然后完全退出并重新打开 Codex，新建或 fork 任务。
+这是本机代理入口的请求大小上限。运行 `./pixelpass status` 查看当前上限；如果长会话持续增长，可以另开任务并带上简短交接摘要。
 
-### 仍出现 `127.0.0.1:17892` 的 413
+### 收到 `api.deepseek.com/responses` 的 413
 
-这是 PixelPass 的本地入口限制，而不是 DeepSeek 上游限制。先运行 `status`
-查看入口上限；如果会话长期无限增长，建议另开任务并携带一份简短交接摘要。
-
-### 出现 `api.deepseek.com/responses` 的 413
-
-这说明请求没有正确经过 PixelPass，或者上游仍收到内联图片。运行：
-
-```bash
-./pixelpass doctor
-./pixelpass status
-```
+请求可能没有经过代理，或上游仍收到内联图片。运行 `./pixelpass doctor` 和 `./pixelpass status` 检查路由和最近的请求统计。
 
 ### 图片上传失败
 
-检查 `status` 中的 `lastError`，并确认当前 DeepSeek 模型和账户支持
-`input_image.file_id`。默认不会回退到 Base64。
+查看 `status` 中的 `lastError`，并确认当前 DeepSeek 模型和账户支持 `input_image.file_id`。默认策略不会退回 Base64。
 
 ## 配置
 
@@ -180,8 +154,8 @@ macOS 托管模式默认允许最高 1 GiB 的本地请求体，最终发给 Dee
 - 统一控制入口目前只实现了 macOS LaunchAgent；Windows 保留旧版计划任务脚本。
 - 仅处理 HTTP Responses API，不支持 WebSocket。
 - 支持 PNG、JPEG、WebP、GIF。
-- `file_id` 只属于 DeepSeek 账户，不能发给其他 provider。
-- 不会减少图片 token，也不会替用户筛选动画帧或关键截图。
+- `file_id` 属于 DeepSeek 账户，不能发给其他 provider。
+- 不会减少视觉 token，也不会替用户筛选动画帧或关键截图。
 
 ## 开发
 
@@ -191,15 +165,7 @@ npm run check
 npm run package:release
 ```
 
-打包会生成：
-
-```text
-dist/pixelpass-v<version>.tar.gz
-dist/pixelpass-v<version>.tar.gz.sha256
-```
-
-测试使用 Codex 自带的 Node.js 24.22.1 验证；GitHub Actions 会在 macOS 上重复
-执行测试、语法检查和发布包校验。
+打包会生成 `dist/pixelpass-v<version>.tar.gz` 及对应的 `.sha256` 校验文件。GitHub Actions 会在 macOS 上运行测试、语法检查和发布包校验。
 
 ## License
 

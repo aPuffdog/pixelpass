@@ -1,4 +1,4 @@
-# PixelPass Security
+# DeepSeek Image Cache Proxy Security
 
 ## Reporting
 
