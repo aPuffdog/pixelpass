@@ -141,6 +141,22 @@
           </div>
           <div class="prerequisites"><span data-i18n="prerequisiteLabel">准备好环境：</span><a href="https://nodejs.org/en/download" target="_blank" rel="noopener noreferrer">Node.js 22.15+ ↗</a><a data-readme href="https://github.com/aPuffdog/pixelpass#readme" target="_blank" rel="noopener noreferrer" data-i18n="providerGuide">DeepSeek provider 配置与完整文档 ↗</a></div>
         </div>
+        <details class="ai-install-card" id="ai-install">
+          <summary>
+            <span class="ai-summary">
+              <span class="ai-badge" aria-hidden="true">AI</span>
+              <span><span class="ai-kicker" data-i18n="aiKicker">AI 安装助手 · 可复制</span><strong data-i18n="aiTitle">不想手动操作？把这段提示交给 AI。</strong></span>
+            </span>
+            <span class="expand-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="ai-install-body">
+            <div class="ai-install-intro"><p data-i18n="aiIntro">适合能读取终端并执行命令的 AI。它会先检查系统、Node.js 和 Codex provider，得到确认后才修改配置。</p><p data-i18n="aiSafety">不会要求你粘贴 API Key；安装失败时会停止并给出诊断与恢复方法。</p></div>
+            <div class="ai-prompt-panel">
+              <div class="ai-prompt-bar"><span class="mono">AI INSTALL PROMPT</span><button type="button" class="ai-copy-button" data-copy="ai-install-prompt" data-i18n="copyPrompt">复制给 AI</button></div>
+              <pre><code id="ai-install-prompt" data-ai-prompt></code></pre>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 

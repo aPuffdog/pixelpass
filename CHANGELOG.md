@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add copyable AI installation prompts to the bilingual homepage, READMEs, and GitHub Release guidance.
+
 ## 0.3.1 - 2026-10-27
 
 - Publish distinct macOS TAR.GZ and Windows ZIP release assets, each with a

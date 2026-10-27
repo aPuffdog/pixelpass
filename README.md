@@ -137,6 +137,43 @@ Windows 入口与 macOS 保持一致：
 
 `stop` / `start` / `restart` 只控制代理服务，不修改 Codex 路由；完整关闭整套流程请使用 `off`。
 
+### 让 AI 帮你安装
+
+如果使用的 AI 可以读取终端并执行命令，可以把下面整段提示直接交给它。提示要求 AI 先检查系统、Node.js 和 Codex provider，得到确认后才修改配置，并且不会索取 API Key。
+
+```text
+你是一名谨慎的安装助手。请在这台电脑上安装并验收“DeepSeek Image Cache Proxy”。
+目标是让 Codex 的 DeepSeek Responses 请求经过本机 127.0.0.1:17892 代理；
+安装完成后由我手动完全退出并重新打开 Codex。
+
+先只做检查，不要修改任何文件：
+1. 判断系统是 macOS 还是 Windows 10/11。
+2. 检查 Node.js 版本是否不低于 22.15，并确认 node 命令可用。
+3. 检查 ~/.codex/config.toml，Windows 为 %USERPROFILE%\.codex\config.toml，
+   找出当前用于 DeepSeek 的 model_providers.<id>。
+4. 把系统、Node 版本、准备使用的 provider 名称和将执行的命令告诉我，
+   等我确认后再继续。
+
+不要要求我粘贴 API Key，不要输出 Authorization、密钥或其他敏感内容。
+
+我确认后：
+- 从 https://github.com/aPuffdog/pixelpass/releases/latest 下载对应系统的正式包：
+  macOS 使用 *-macos.tar.gz，Windows 使用 *-windows.zip。
+- 同时下载对应的 .sha256 并验证。
+- 解压到固定且可写的目录，不要只放在临时目录。
+- macOS：进入解压后的 pixelpass 目录，运行 sh ./install.sh，
+  然后运行 ./pixelpass status。
+- Windows：在解压后的 pixelpass 目录打开 PowerShell，运行
+  .\pixelpass.cmd on -ProviderId <上面确认的 provider 名称>，
+  然后运行 .\pixelpass.cmd status。
+- 确认健康检查通过，然后提醒我完全退出并重新打开 Codex。
+
+如果安装失败，不要删除配置、备份或强制重置。停止后续步骤，
+提供 status、健康检查和日志中的关键错误，并告诉我如何恢复。
+需要恢复直连时：macOS 运行 ./pixelpass off，
+Windows 运行 .\pixelpass.cmd off。
+```
+
 ### 检查与恢复
 
 macOS：

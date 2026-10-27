@@ -149,6 +149,42 @@ Everyday Windows controls mirror the macOS commands:
 
 `stop`, `start`, and `restart` control only the proxy service; use `off` to shut down the full routing setup.
 
+### Let an AI install it
+
+If your AI assistant can inspect a terminal and run commands, give it the complete prompt below. It checks the operating system, Node.js, and Codex provider first, asks for confirmation before modifying configuration, and never requests an API key.
+
+```text
+You are a careful installation assistant. Install and verify “DeepSeek Image Cache Proxy”
+on this computer. The goal is to route Codex's DeepSeek Responses requests through a
+localhost proxy at 127.0.0.1:17892. I will fully quit and reopen Codex manually after installation.
+
+First, inspect only. Do not modify any files:
+1. Determine whether this is macOS or Windows 10/11.
+2. Check that Node.js is version 22.15 or newer and that the node command works.
+3. Inspect ~/.codex/config.toml, or %USERPROFILE%\.codex\config.toml on Windows,
+   and find the model_providers.<id> currently used for DeepSeek.
+4. Show me the operating system, Node.js version, provider name, and commands you plan
+   to run. Wait for my confirmation before continuing.
+
+Never ask me to paste an API key, and never print Authorization headers, keys, or other secrets.
+
+After I confirm:
+- Download the matching package from https://github.com/aPuffdog/pixelpass/releases/latest:
+  use *-macos.tar.gz on macOS and *-windows.zip on Windows.
+- Download the matching .sha256 file and verify it before installation.
+- Extract the package to a permanent, writable directory.
+- macOS: enter the extracted pixelpass directory, run sh ./install.sh,
+  then run ./pixelpass status.
+- Windows: open PowerShell in the extracted pixelpass directory, run
+  .\pixelpass.cmd on -ProviderId <the confirmed provider name>,
+  then run .\pixelpass.cmd status.
+- Confirm that the health check passes, then tell me to fully quit and reopen Codex.
+
+If installation fails, do not delete configuration, backups, or force a reset. Stop further
+changes, provide the relevant errors from status, health checks, and logs, and explain recovery.
+To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.
+```
+
 ### Check or restore
 
 macOS:

@@ -15,6 +15,7 @@ const translations = {
     downloadEyebrow: "02 / 下载", downloadTitle: "选好平台，就能开始。", downloadIntro: "开源、无额外 npm 依赖。先准备 Node.js 22.15+ 和已配置 DeepSeek 的 Codex。", macType: "LaunchAgent · 统一控制命令", macDescription: "安装时启动本机代理、备份 Codex 配置并接入代理路由。登录后自动启动。", macArchive: "正式发布包 · 含 install.sh", checksum: "SHA-256 校验", macSteps: "查看 macOS 安装步骤 →", winType: "PowerShell · 计划任务脚本", winDescription: "下载正式 Windows ZIP，使用 pixelpass.cmd 完成安装、状态检查和恢复直连。计划任务在登录后启动。", winArchive: "正式发布包 · 含 pixelpass.cmd", winScript: "Windows 脚本支持", winSteps: "查看 Windows 安装步骤 →", downloadNote: "两种下载都是独立发布包，包含可阅读的安装脚本；需 Node.js 运行环境。安装后请保留解压目录。", allReleases: "所有版本 ↗",
     quickTitle: "从下载到接入，只需三步。", platformLabel: "安装平台", macStep1: "解压并打开终端", macStep1Body: "解压下载的 TAR.GZ，将得到的 pixelpass 文件夹放到固定位置。在这个文件夹内打开终端。", macStep2: "运行安装脚本", macStep2Body: "脚本会备份配置、启动代理，并把当前 DeepSeek provider 的 base_url 指向本机。", restartTitle: "重开 Codex，再检查状态", macStep3Body: "完全退出并重新打开 Codex，然后新建或 fork 一个任务。检查代理和路由：", copy: "复制", restoreTitle: "需要恢复直连？", macRestore: "恢复 Codex 直连并关闭代理。再次启用用 ./pixelpass on，之后重开 Codex。",
     winStep1: "解压并打开 PowerShell", winStep1Body: "将 ZIP 解压到固定目录，在解压后的项目文件夹打开 PowerShell。确认 node.exe 已在 PATH 中。", winStep2: "指定已有 provider，运行安装", winStep2Body: "把 custom 换成 Codex config.toml 中 DeepSeek provider 的实际名称。脚本会注册计划任务、备份并修改该 provider 的地址。", winStep3Body: "完全退出并重新打开 Codex，再新建或 fork 任务。在项目目录检查代理和路由：", winRestore: "关闭代理并按安装记录恢复 Codex 配置，之后重开 Codex。stop 只停止服务，不恢复路由。", prerequisiteLabel: "准备好环境：", providerGuide: "DeepSeek provider 配置与完整文档 ↗",
+    aiKicker: "AI 安装助手 · 可复制", aiTitle: "不想手动操作？把这段提示交给 AI。", aiIntro: "适合能读取终端并执行命令的 AI。它会先检查系统、Node.js 和 Codex provider，得到确认后才修改配置。", aiSafety: "不会要求你粘贴 API Key；安装失败时会停止并给出诊断与恢复方法。", copyPrompt: "复制给 AI",
     faqEyebrow: "03 / 你可能还想知道", faqTitle: "开始之前，心里有底。", issueLink: "反馈问题 ↗", faq1Q: "它压缩图片，还是删除历史？", faq1A: "它将本机发往 DeepSeek Responses 的 Base64 图片改成文件引用。图片字节、画质和消息位置保留；模型仍能读取图片，视觉 token 不会因此减少。Codex 到本机这一段仍可能携带完整 Base64。", faq2Q: "什么算重复图片？file_id 从哪里来？", faq2A: "重复指当前请求中的图片与历史上传图片的字节完全相同。SHA-256 仅用于本地查找；file_id 来自 DeepSeek /files 上传响应中的 id。重新压缩后，即使肉眼相似，也可能无法命中。", faq3Q: "重启、到期或者上传失败会怎样？", faq3A: "重启会保留本地映射。默认请求文件 30 天后过期，以 DeepSeek 返回的到期时间为准；到期后在图片再次出现时重新上传。可重试上传默认最多重试 3 次，最终失败终止该请求。远端文件被提前删除时，当前版本不会自动修复旧 ID，需要处理本地缓存。", faq4Q: "macOS 和 Windows 的支持一样吗？", faq4A: "两者使用同一 Node.js 代理核心。macOS 提供 LaunchAgent 和 pixelpass on/off/status，托管入口默认 1 GiB；Windows 使用 PowerShell、计划任务和 pixelpass.cmd 提供相同日常入口，入口默认 256 MiB。Windows 发布任务会在 windows-latest 上实际执行安装、健康检查、停止、启动和恢复直连。", faq5Q: "需要把 API Key 再交给这个网页吗？", faq5A: "不需要。网页只是项目介绍和下载入口。代理运行在本机，默认只监听 127.0.0.1，沿用 Codex 请求中的凭证。本地缓存保存凭证指纹、图片哈希、文件 ID 与有效期，不保存图片本体。",
     closingTitle: "下一轮，让历史图片轻一点。", closingCta: "选择平台并下载", footerNote: "开源 · MIT License · 社区项目", fullDocs: "完整文档", releaseNotes: "版本记录"
   },
@@ -33,9 +34,72 @@ const translations = {
     downloadEyebrow: "02 / DOWNLOAD", downloadTitle: "Choose a platform and start.", downloadIntro: "Open source, with no extra npm dependencies. Prepare Node.js 22.15+ and a DeepSeek provider configured in Codex.", macType: "LaunchAgent · unified controls", macDescription: "Starts the local proxy, backs up Codex configuration, and routes the provider through localhost. Starts again at login.", macArchive: "Release package · includes install.sh", checksum: "SHA-256 checksum", macSteps: "See macOS install steps →", winType: "PowerShell · Task Scheduler scripts", winDescription: "Download the dedicated Windows ZIP, then use pixelpass.cmd to install, inspect, or restore direct routing. Task Scheduler starts it at sign-in.", winArchive: "Release package · includes pixelpass.cmd", winScript: "Windows support", winSteps: "See Windows install steps →", downloadNote: "Both downloads are dedicated release packages with readable scripts and require Node.js. Keep the extracted folder in place.", allReleases: "All releases ↗",
     quickTitle: "From download to connected, in three steps.", platformLabel: "Install platform", macStep1: "Extract and open Terminal", macStep1Body: "Extract the TAR.GZ and place the pixelpass folder somewhere permanent. Open Terminal in that folder.", macStep2: "Run the installer", macStep2Body: "The script backs up configuration, starts the proxy, and points the current DeepSeek provider base_url at localhost.", restartTitle: "Restart Codex and check status", macStep3Body: "Fully quit and reopen Codex, then create or fork a task. Check the proxy and route:", copy: "Copy", restoreTitle: "Need the direct route again?", macRestore: "Run ./pixelpass off to restore direct Codex traffic and stop the proxy. Re-enable with ./pixelpass on, then restart Codex.",
     winStep1: "Extract and open PowerShell", winStep1Body: "Extract the ZIP to a permanent folder and open PowerShell there. Make sure node.exe is on PATH.", winStep2: "Choose the existing provider and install", winStep2Body: "Replace custom with the actual DeepSeek provider name in Codex config.toml. The script registers a task, backs up config, and changes that provider URL.", winStep3Body: "Fully quit and reopen Codex, then create or fork a task. Check the proxy and route from the project folder:", winRestore: "Run .\\pixelpass.cmd off to stop the proxy and restore the recorded Codex route, then restart Codex. stop only stops the service.", prerequisiteLabel: "Prepare:", providerGuide: "DeepSeek provider setup and full docs ↗",
+    aiKicker: "AI INSTALL ASSISTANT · COPY READY", aiTitle: "Prefer not to do it manually? Give this to your AI.", aiIntro: "For an AI with terminal access. It checks the operating system, Node.js, and Codex provider before making changes.", aiSafety: "It never asks for an API key and stops with diagnostics and recovery steps if installation fails.", copyPrompt: "Copy for AI",
     faqEyebrow: "03 / BEFORE YOU START", faqTitle: "Know what will happen.", issueLink: "Report an issue ↗", faq1Q: "Does it compress images or delete history?", faq1A: "It changes Base64 images sent from localhost to DeepSeek Responses into file references. Image bytes, quality, and message positions remain; the model still reads the images, and visual token usage does not decrease. Codex may still send full Base64 to localhost.", faq2Q: "What counts as a duplicate? Where does file_id come from?", faq2A: "A duplicate has bytes identical to an image uploaded in an earlier request. SHA-256 is only the local lookup key; file_id comes from the id in DeepSeek's /files upload response. Re-encoding can miss even when images look alike.", faq3Q: "What happens after restart, expiry, or upload failure?", faq3A: "Restart keeps the local mapping. The default requested file lifetime is 30 days, subject to DeepSeek's returned expiry; after expiry the next appearance uploads again. Uploads retry up to three times by default, then the request stops. Early remote deletion is not automatically repaired in the current version.", faq4Q: "Are macOS and Windows supported the same way?", faq4A: "Both use the same Node.js proxy core. macOS has LaunchAgent plus pixelpass on/off/status and a 1 GiB managed entry limit. Windows uses PowerShell, Task Scheduler, and pixelpass.cmd for the same everyday actions, with a 256 MiB default entry limit. The Windows release job executes install, health, stop, start, and direct-route restoration on windows-latest.", faq5Q: "Do I need to enter an API key on this page?", faq5A: "No. This page is only the project guide and download entry. The proxy runs locally on 127.0.0.1 and uses credentials already sent by Codex. The local cache stores a credential fingerprint, image hash, file ID, and expiry, not the image itself.",
     closingTitle: "Next request, lighter history.", closingCta: "Choose a platform", footerNote: "Open source · MIT License · Community project", fullDocs: "Full docs", releaseNotes: "Releases"
   }
+};
+
+const aiInstallPrompts = {
+  "zh-CN": String.raw`你是一名谨慎的安装助手。请在这台电脑上安装并验收“DeepSeek Image Cache Proxy”。
+目标是让 Codex 的 DeepSeek Responses 请求经过本机 127.0.0.1:17892 代理；
+安装完成后由我手动完全退出并重新打开 Codex。
+
+先只做检查，不要修改任何文件：
+1. 判断系统是 macOS 还是 Windows 10/11。
+2. 检查 Node.js 版本是否不低于 22.15，并确认 node 命令可用。
+3. 检查 ~/.codex/config.toml，Windows 为 %USERPROFILE%\.codex\config.toml，
+   找出当前用于 DeepSeek 的 model_providers.<id>。
+4. 把系统、Node 版本、准备使用的 provider 名称和将执行的命令告诉我，
+   等我确认后再继续。
+
+不要要求我粘贴 API Key，不要输出 Authorization、密钥或其他敏感内容。
+
+我确认后：
+- 从 https://github.com/aPuffdog/pixelpass/releases/latest 下载对应系统的正式包：
+  macOS 使用 *-macos.tar.gz，Windows 使用 *-windows.zip。
+- 同时下载对应的 .sha256 并验证。
+- 解压到固定且可写的目录，不要只放在临时目录。
+- macOS：进入解压后的 pixelpass 目录，运行 sh ./install.sh，
+  然后运行 ./pixelpass status。
+- Windows：在解压后的 pixelpass 目录打开 PowerShell，运行
+  .\pixelpass.cmd on -ProviderId <上面确认的 provider 名称>，
+  然后运行 .\pixelpass.cmd status。
+- 确认健康检查通过，然后提醒我完全退出并重新打开 Codex。
+
+如果安装失败，不要删除配置、备份或强制重置。停止后续步骤，
+提供 status、健康检查和日志中的关键错误，并告诉我如何恢复。
+需要恢复直连时：macOS 运行 ./pixelpass off，
+Windows 运行 .\pixelpass.cmd off。`,
+  en: String.raw`You are a careful installation assistant. Install and verify “DeepSeek Image Cache Proxy”
+on this computer. Route Codex's DeepSeek Responses requests through a localhost proxy at
+127.0.0.1:17892. I will fully quit and reopen Codex manually after installation.
+
+First, inspect only and do not modify files:
+1. Determine whether this is macOS or Windows 10/11.
+2. Check that Node.js is version 22.15 or newer and that the node command works.
+3. Inspect ~/.codex/config.toml, or %USERPROFILE%\.codex\config.toml on Windows,
+   and find the model_providers.<id> currently used for DeepSeek.
+4. Show me the operating system, Node.js version, provider name, and commands you plan
+   to run. Wait for my confirmation before continuing.
+
+Never ask me to paste an API key, and never print Authorization headers, keys, or other secrets.
+
+After I confirm:
+- Download the matching package from https://github.com/aPuffdog/pixelpass/releases/latest:
+  use *-macos.tar.gz on macOS and *-windows.zip on Windows.
+- Download the matching .sha256 file and verify it before installation.
+- Extract the package to a permanent, writable directory.
+- macOS: enter the extracted pixelpass directory, run sh ./install.sh,
+  then run ./pixelpass status.
+- Windows: open PowerShell in the extracted pixelpass directory, run
+  .\pixelpass.cmd on -ProviderId <the confirmed provider name>,
+  then run .\pixelpass.cmd status.
+- Confirm that the health check passes, then tell me to fully quit and reopen Codex.
+
+If installation fails, do not delete configuration, backups, or force a reset. Stop further
+changes, provide the relevant errors from status, health checks, and logs, and explain recovery.
+To restore direct routing: run ./pixelpass off on macOS or .\pixelpass.cmd off on Windows.`
 };
 
 let savedLang;
@@ -57,6 +121,9 @@ function setText(lang) {
   });
   document.querySelectorAll("[data-lang]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
+  });
+  document.querySelectorAll("[data-ai-prompt]").forEach((el) => {
+    el.textContent = aiInstallPrompts[lang];
   });
   const stem = "assets/deepseek-image-cache-proxy." + lang;
   const source = document.querySelector("[data-lifecycle-picture] source");
